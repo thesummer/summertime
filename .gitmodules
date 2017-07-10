@@ -7,3 +7,6 @@
 [submodule "scons-build-tools"]
 	path = scons-build-tools
 	url = git@github.com:thesummer/scons-build-tools.git
+[submodule "esp-open-sdk"]
+	path = esp-open-sdk
+	url = git@github.com:pfalcon/esp-open-sdk.git
