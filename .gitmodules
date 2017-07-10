@@ -1,0 +1,9 @@
+[submodule "outpost-core"]
+	path = outpost-core
+	url = git@github.com:thesummer/outpost-core.git
+[submodule "ESP8266_RTOS_SDK"]
+	path = ESP8266_RTOS_SDK
+	url = https://github.com/espressif/ESP8266_RTOS_SDK.git
+[submodule "scons-build-tools"]
+	path = scons-build-tools
+	url = git@github.com:thesummer/scons-build-tools.git
