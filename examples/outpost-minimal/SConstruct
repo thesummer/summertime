@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+
+
+import os
+
+rootpath = '../../'
+outpostpath = os.path.join(rootpath, 'outpost-core')
+
+envGlobal = Environment(toolpath=[os.path.join(rootpath, 'scons-build-tools/site_tools')],
+                        buildroot=[rootpath + 'build/'],
+                        tools=['utils_buildformat', 'utils_buildsize'],
+                        OS='freertos',
+                        DEVICE_SIZE={
+                          'name' : 'NodeMcu',
+                          'flash': 4*1024*1024,
+                          'ram'  : 128 * 1024
+                        },
+                        BASEPATH=os.path.abspath('.'),
+                        ENV=os.environ)
+#Help(vars.GenerateHelpText(envGlobal))
+
+buildfolder = os.path.join(rootpath, 'build')
+envGlobal.Tool('compiler_xtensa_lx106_elf_gcc')
+envGlobal.Tool('settings_buildpath')
+envGlobal['BUILDPATH'] = os.path.abspath(buildfolder)
+
+
+envGlobal.SConscript(os.path.join(rootpath, 'SConscript.sdk'), exports='envGlobal')
+envGlobal.SConscript(os.path.join(outpostpath, 'modules/SConscript.library'), exports='envGlobal')
+
+env = envGlobal.Clone()
+
+env.AppendUnique(LIBS=[
+    'outpost_rtos',
+    'outpost_time',
+    'outpost_utils',
+])
+
+files = env.Glob('*.cpp')
+
+print(envGlobal['CPPPATH'])
+program = env.Program('example_outpost-minimal', files)
+#envGlobal.Size(0)
+envGlobal.Alias('build', program)
+envGlobal.Alias('build', env.Size(program))
+envGlobal.Default('build')
