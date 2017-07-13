@@ -18,7 +18,9 @@ that remove the duplicates from libcirom.a
 
 `
 cd ESP8266_RTOS_SDK/lib
+
 cp libcirom.a libcirom.a.save
+
 xtensa-lx106-elf-objcopy -N printf -N putchar -N puts libcirom.a
 `
 
