@@ -11,16 +11,25 @@ MouseArea{
     property real value: 0.0
     property string unit: ""
 
+    states: [
+        State {
+            name: "activated"
+            PropertyChanges { target: rateLabel; text: value.toFixed(2) }
+        }
+    ]
+
     Rectangle
     {
+        id: content
         anchors.fill: parent
         color : parent.color
         Column {
             anchors.fill: parent
             Label {
+                id: rateLabel
                 height: 0.75 * parent.height
                 width: parent.width
-                text: value.toFixed(2)
+                text: "--.--"
                 font.pointSize: height * 0.5
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
