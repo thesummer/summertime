@@ -117,7 +117,7 @@ ApplicationWindow {
         id: tabBar
         currentIndex: swipeView.currentIndex
         TabButton {
-            text: qsTr("First")
+            text: qsTr("Measurement")
         }
         TabButton {
             text: qsTr("Second")

@@ -11,23 +11,28 @@ MouseArea{
     property real value: 0.0
     property string unit: ""
 
-    Column {
+    Rectangle
+    {
         anchors.fill: parent
-        Label {
-            height: 0.75 * parent.height
-            width: parent.width
-            text: value.toFixed(2)
-            font.pointSize: height * 0.5
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-        }
-        Label {
-            height: 0.25 * parent.height
-            width: parent.width
-            text: unit
-            font.pointSize: height * 0.5
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
+        color : parent.color
+        Column {
+            anchors.fill: parent
+            Label {
+                height: 0.75 * parent.height
+                width: parent.width
+                text: value.toFixed(2)
+                font.pointSize: height * 0.5
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+            Label {
+                height: 0.25 * parent.height
+                width: parent.width
+                text: unit
+                font.pointSize: height * 0.5
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
         }
     }
 }
