@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.3
 ColumnLayout {
     id: col
     height: parent.height
-    state: "unconneted"
+    state: "unconnected"
 
     property real displayHeight : height * 0.85
     function moveToTop(newTop) {
@@ -43,7 +43,7 @@ ColumnLayout {
         id: mainRate
         Layout.fillWidth: true
         Layout.preferredHeight: 2* parent.displayHeight / 3
-        
+
         populate: Transition {
             NumberAnimation { properties: "x,y"; from: 200; duration: 100; easing.type: Easing.OutBounce }
         }
@@ -53,7 +53,7 @@ ColumnLayout {
         move: Transition {
             NumberAnimation { properties: "x"; easing.type: Easing.OutBounce }
         }
-        
+
         DynamicRateBox {
             id: boxPerMinute
             unit: qsTr("per minute")
@@ -68,7 +68,7 @@ ColumnLayout {
         id: additionalRates
         Layout.preferredHeight: parent.displayHeight / 3
         Layout.fillWidth: true
-        
+
         populate: Transition {
             NumberAnimation { properties: "x,y"; from: 200; duration: 100; easing.type: Easing.OutBounce }
         }
@@ -78,7 +78,7 @@ ColumnLayout {
         move: Transition {
             NumberAnimation { properties: "x"; easing.type: Easing.OutBounce }
         }
-        
+
         DynamicRateBox {
             id: boxPerHour
             unit: qsTr("per hour")
@@ -86,7 +86,7 @@ ColumnLayout {
             width: parent.width / 2
             color: "#006325"
         }
-        
+
         DynamicRateBox {
             id: boxPerDay
             unit: qsTr("per day")
@@ -110,12 +110,12 @@ ColumnLayout {
         target: boxPerMinute
         onClicked: { col.moveToTop(target) }
     }
-    
+
     Connections {
         target: boxPerHour
         onClicked: { col.moveToTop(target) }
     }
-    
+
     Connections {
         target: boxPerDay
         onClicked: { col.moveToTop(target) }

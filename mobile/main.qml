@@ -11,17 +11,14 @@ ApplicationWindow {
 
     SwipeView {
         id: swipeView
+        spacing: 20
         anchors.fill: parent
         currentIndex: tabBar.currentIndex
 
-        MeasurementPage {
+        ConnectionPage {
         }
 
-        Page {
-            Label {
-                text: qsTr("Second page")
-                anchors.centerIn: parent
-            }
+        MeasurementPage {
         }
     }
 
@@ -29,10 +26,10 @@ ApplicationWindow {
         id: tabBar
         currentIndex: swipeView.currentIndex
         TabButton {
-            text: qsTr("Measurement")
+            text: qsTr("Connection")
         }
         TabButton {
-            text: qsTr("Second")
+            text: qsTr("Measurement")
         }
     }
 }
