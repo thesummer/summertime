@@ -20,6 +20,9 @@ ApplicationWindow {
 
         MeasurementPage {
         }
+
+        GraphPage {
+        }
     }
 
     footer: TabBar {
@@ -30,6 +33,9 @@ ApplicationWindow {
         }
         TabButton {
             text: qsTr("Measurement")
+        }
+        TabButton {
+            text: qsTr("Analysis")
         }
     }
 }
