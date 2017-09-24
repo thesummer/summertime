@@ -3,12 +3,14 @@ QT += qml quick
 CONFIG += c++11
 
 SOURCES += main.cpp \
-    datasource.cpp
+    datasource.cpp \
+    remoteconnection.cpp
 
 RESOURCES += qml.qrc
 
 QT += charts
 QT += widgets
+QT += network
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
@@ -33,4 +35,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-    datasource.h
+    datasource.h \
+    remoteconnection.h

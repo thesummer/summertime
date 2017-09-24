@@ -1,6 +1,7 @@
 import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
+import Mobile 1.0
 
 Page {
     ColumnLayout {
@@ -15,7 +16,8 @@ Page {
             id: connectButton
             text: qsTr("Connect")
 
-            onClicked: { parent.state = "connected" }
+            onClicked: {
+                remoteConnection.connectSocket(inputIp.text) }
         }
 
         MouseArea {
@@ -48,6 +50,7 @@ Page {
         }
         Rectangle {
             id: inputIp
+            property string text: inputIpText.text == "..." ? "127.0.0.1" : inputIpText.text
             border.width: 1
             Layout.leftMargin: 25
             Layout.preferredHeight: inputIpText.implicitHeight * 1.2
@@ -66,7 +69,21 @@ Page {
             enabled: false
             text: qsTr("Disconnect")
 
-            onClicked: { parent.state = "disconnected" }
+            onClicked: { remoteConnection.disconnectSocket() }
+        }
+
+        Connections {
+            target: remoteConnection
+            onStatusChanged: {
+            switch (newStatus) {
+            case RemoteConnection.Connected: col.state = "connected"
+                break;
+            case RemoteConnection.Disconnected: col.state = "disconnected"
+                break;
+            case RemoteConnection.ErrInvalidAddress:
+                break;
+            }
+            }
         }
 
         states: [

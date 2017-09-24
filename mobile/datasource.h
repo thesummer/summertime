@@ -14,8 +14,6 @@ class DataSource : public QObject
 public:
     explicit DataSource(QObject *parent = 0);
 
-Q_SIGNALS:
-
 public slots:
 
     void

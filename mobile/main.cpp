@@ -3,8 +3,10 @@
 #include <QtQuick/QQuickView>
 #include <QtQml/QQmlEngine>
 #include <QtCore/QDir>
-#include "datasource.h"
 #include <QQmlApplicationEngine>
+
+#include "datasource.h"
+#include "remoteconnection.h"
 
 int main(int argc, char *argv[])
 {
@@ -12,10 +14,13 @@ int main(int argc, char *argv[])
     // Qt Charts uses Qt Graphics View Framework for drawing, therefore QApplication must be used.
     QApplication app(argc, argv);
     DataSource dataSource;
+    RemoteConnection remoteConnection;
+    qmlRegisterType<RemoteConnection>("Mobile", 1, 0, "RemoteConnection");
 
     QQmlApplicationEngine engine;
-    engine.load(QUrl(QLatin1String("qrc:/main.qml")));
     engine.rootContext()->setContextProperty("dataSource", &dataSource);
+    engine.rootContext()->setContextProperty("remoteConnection", &remoteConnection);
+    engine.load(QUrl(QLatin1String("qrc:/main.qml")));
     if (engine.rootObjects().isEmpty())
         return -1;
 
