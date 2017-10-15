@@ -96,7 +96,7 @@ will be ignored.
 
 +-------------------------------------------------+
 |                         |                       |
-|      Packet type (3)    | Packet sequence count |
+|      Packet type (4)    | Packet sequence count |
 |       (uint16_t)        |      (uint16_t)       |
 +-------------------------------------------------+
 
@@ -109,7 +109,7 @@ The current tick frequency will be transmitted as a 32 bit floating point number
 
 +-------------------------------------------------------------------------+
 |                         |                       |                       |
-|      Packet type (3)    | Packet sequence count |    Tick frequnecy     |
+|      Packet type (5)    | Packet sequence count |    Tick frequnecy     |
 |       (uint16_t)        |      (uint16_t)       |       (float)         |
 +-------------------------------------------------------------------------+
 
@@ -117,12 +117,12 @@ The current tick frequency will be transmitted as a 32 bit floating point number
 
 The tick count during the last minute will be transmitted as a 16 bit integer.
 
-- Packet type: 5
+- Packet type: 6
 - Application data: Tick count of the last minute
 
 +-------------------------------------------------------------------------+
 |                         |                       |                       |
-|      Packet type (3)    | Packet sequence count |   Last minute count   |
+|      Packet type (6)    | Packet sequence count |   Last minute count   |
 |       (uint16_t)        |      (uint16_t)       |       (uint16_t)      |
 +-------------------------------------------------------------------------+
 
