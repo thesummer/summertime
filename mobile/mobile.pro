@@ -4,7 +4,9 @@ CONFIG += c++11
 
 SOURCES += main.cpp \
     datasource.cpp \
-    remoteconnection.cpp
+    remoteconnection.cpp \
+    packet.cpp \
+    qdatastreamwriter.cpp
 
 RESOURCES += qml.qrc
 
@@ -36,4 +38,10 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     datasource.h \
-    remoteconnection.h
+    remoteconnection.h \
+    packet.h \
+    serializer_interface.h \
+    qdatastreamwriter.h
+
+DISTFILES += \
+    ../Protocol.md
