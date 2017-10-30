@@ -45,10 +45,13 @@ public:
     }
 
     virtual bool
-    serialize(SerializerInterface& writer) = 0;
+    serialize(SerializerInterface& writer) const = 0;
 
     virtual bool
     deserialize(DeserializerInterface& reader) = 0;
+
+    virtual size_t
+    getSerializedSize() const = 0;
 
 protected:
     static void
@@ -67,7 +70,6 @@ private:
 class PingPacket : public Packet
 {
 public:
-    const size_t packetSize = 4;
 
     PingPacket() :
         Packet(PacketType::ping)
@@ -75,16 +77,21 @@ public:
     }
 
     virtual bool
-    serialize(SerializerInterface& writer);
+    serialize(SerializerInterface& writer) const;
 
     virtual bool
     deserialize(DeserializerInterface& reader);
+
+    virtual size_t
+    getSerializedSize() const
+    {
+        return 4;
+    }
 };
 
 class AcknowledgePacket : public Packet
 {
 public:
-    const size_t packetSize = 6;
 
     AcknowledgePacket() :
         Packet(PacketType::acknowledge),
@@ -104,11 +111,20 @@ public:
     {
     }
 
+    virtual uint16_t
+    getAckSequenceCount() const;
+
     virtual bool
-    serialize(SerializerInterface& writer);
+    serialize(SerializerInterface& writer) const;
 
     virtual bool
     deserialize(DeserializerInterface& reader);
+
+    virtual size_t
+    getSerializedSize() const
+    {
+        return 6;
+    }
 
 private:
     uint16_t mAckSequenceCount;
@@ -117,7 +133,6 @@ private:
 class StartMeasurementPacket : public Packet
 {
 public:
-    const size_t packetSize = 4;
 
     StartMeasurementPacket() :
         Packet(PacketType::startMeasurement)
@@ -125,16 +140,21 @@ public:
     }
 
     virtual bool
-    serialize(SerializerInterface& writer);
+    serialize(SerializerInterface& writer) const;
 
     virtual bool
     deserialize(DeserializerInterface& reader);
+
+    virtual size_t
+    getSerializedSize() const
+    {
+        return 4;
+    }
 };
 
 class StopMeasurementPacket : public Packet
 {
 public:
-    const size_t packetSize = 4;
 
     StopMeasurementPacket() :
         Packet(PacketType::stopMeasurement)
@@ -142,16 +162,21 @@ public:
     }
 
     virtual bool
-    serialize(SerializerInterface& writer);
+    serialize(SerializerInterface& writer) const;
 
     virtual bool
     deserialize(DeserializerInterface& reader);
+
+    virtual size_t
+    getSerializedSize() const
+    {
+        return 4;
+    }
 };
 
 class LiveMeasurementPacket : public Packet
 {
 public:
-    const size_t packetSize = 8;
 
     LiveMeasurementPacket() :
         Packet(PacketType::liveMeasurement),
@@ -172,10 +197,16 @@ public:
     }
 
     virtual bool
-    serialize(SerializerInterface& writer);
+    serialize(SerializerInterface& writer) const;
 
     virtual bool
     deserialize(DeserializerInterface& reader);
+
+    virtual size_t
+    getSerializedSize() const
+    {
+        return 8;
+    }
 
 private:
     float mTickFrequency;
@@ -184,7 +215,6 @@ private:
 class LastMinuteCountPacket : public Packet
 {
 public:
-    const size_t packetSize = 6;
 
     LastMinuteCountPacket() :
         Packet(PacketType::lastMinuteCount)
@@ -203,10 +233,16 @@ public:
     }
 
     virtual bool
-    serialize(SerializerInterface& writer);
+    serialize(SerializerInterface& writer) const;
 
     virtual bool
     deserialize(DeserializerInterface& reader);
+
+    virtual size_t
+    getSerializedSize() const
+    {
+        return 6;
+    }
 
 private:
     uint16_t mLastMinuteCount;

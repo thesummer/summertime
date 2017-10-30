@@ -28,6 +28,9 @@ public:
     void
     storeUint16(uint16_t data);
 
+    const QByteArray&
+    getByteArray();
+
 private:
     QByteArray mDataBuffer;
     QDataStream mDataWriter;
