@@ -38,6 +38,12 @@ QDataStreamWriter::storeUint16(uint16_t data)
     mDataWriter << static_cast<quint16>(data);
 }
 
+const QByteArray&
+QDataStreamWriter::getByteArray()
+{
+    return mDataBuffer;
+}
+
 
 QDataStreamReader::QDataStreamReader(const QByteArray data)
     : mDataReader(data),
