@@ -6,12 +6,18 @@
 
 RemoteConnection::RemoteConnection(QObject *parent) :
     QObject(parent),
-    mTimer(this),
+    mTimeoutTimer(this),
     mSocket(this)
 {
-    mTimer.setSingleShot(true);
+    // Timeout timer is triggered manually
+    mTimeoutTimer.setSingleShot(true);
+    connect(&mTimeoutTimer, &QTimer::timeout, this, &RemoteConnection::handlePacketTimeout);
+    // Heartbeat timer is periodical
+    mHeartbeatTimer.setSingleShot(false);
+    mHeartbeatTimer.setInterval(hearbeatIntervalMs);
+    connect(&mHeartbeatTimer, &QTimer::timeout, this, &RemoteConnection::sendHeartbeat);
+
     connect(&mSocket, &QUdpSocket::readyRead, this, &RemoteConnection::handleNewPacket);
-    connect(&mTimer, &QTimer::timeout, this, &RemoteConnection::handlePacketTimeout);
 }
 
 void
@@ -27,6 +33,7 @@ RemoteConnection::connectSocket(QString ipAddress)
     {
         if (mRemoteAddress.setAddress(ipAddress) && mSocket.bind(mListenPort))
         {
+            mHeartbeatTimer.start();
             mStatus = ConnectionStatus::Connected;
         }
         else
@@ -44,7 +51,8 @@ RemoteConnection::disconnectSocket()
     {
         mSocket.close();
         mPacketQueue.clear();
-        mTimer.stop();
+        mTimeoutTimer.stop();
+        mHeartbeatTimer.stop();
         mStatus = ConnectionStatus::Disconnected;
         emit statusChanged(mStatus);
     }
@@ -65,8 +73,17 @@ void RemoteConnection::handleNewPacket()
         if (packet.deserialize(reader))
         {
             // We assume that the sequence count in the list is unique
-            mPacketQueue.removeOne(Timetag{QTime(), packet.getAckSequenceCount()});
+            mPacketQueue.removeOne(Timetag{QDateTime(), packet.getAckSequenceCount()});
             updateTimer();
+        }
+    }
+    case protocol::PacketType::ping:
+    {
+        protocol::PingPacket packet;
+        if (packet.deserialize(reader))
+        {
+            protocol::AcknowledgePacket ack(packet);
+            sendPacket(ack);
         }
     }
 
@@ -74,7 +91,7 @@ void RemoteConnection::handleNewPacket()
 }
 
 bool
-RemoteConnection::sendPacket(const protocol::Packet &packet)
+RemoteConnection::sendPacket(const protocol::Packet& packet)
 {
     QDataStreamWriter buffer(packet.getSerializedSize());
     packet.serialize(buffer);
@@ -83,7 +100,7 @@ RemoteConnection::sendPacket(const protocol::Packet &packet)
                                   mRemotePort));
     if (ret == static_cast<qint64>(packet.getSerializedSize()))
     {
-        mPacketQueue.push_front(Timetag{QTime::currentTime(), packet.getSequenceCount()});
+        mPacketQueue.push_front(Timetag{QDateTime::currentDateTime(), packet.getSequenceCount()});
         updateTimer();
         return true;
     }
@@ -94,12 +111,19 @@ RemoteConnection::sendPacket(const protocol::Packet &packet)
 }
 
 void
+RemoteConnection::sendHeartbeat()
+{
+    protocol::PingPacket heartbeatRequest;
+    sendPacket(heartbeatRequest);
+}
+
+void
 RemoteConnection::updateTimer()
 {
     if (!mPacketQueue.isEmpty())
     {
         // Will restart the timer. As the oldest packet is always in last
         // restarting on the same packet is ok.
-        mTimer.start(mPacketQueue.last().timestamp.msecsTo(QTime::currentTime()));
+        mTimeoutTimer.start(mPacketQueue.last().timestamp.msecsTo(QDateTime::currentDateTime().addMSecs(timeoutMs)));
     }
 }

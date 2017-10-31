@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QTimer>
-#include <QTime>
+#include <QDateTime>
 #include <QUdpSocket>
 #include <QList>
 
@@ -40,7 +40,11 @@ public slots:
     void
     handleNewPacket();
 
-    bool sendPacket(const protocol::Packet& packet);
+    bool
+    sendPacket(const protocol::Packet& packet);
+
+    void
+    sendHeartbeat();
 
 private:
     void
@@ -48,7 +52,7 @@ private:
 
     struct Timetag
     {
-        QTime   timestamp;
+        QDateTime   timestamp;
         quint16 sequenceCount;
 
         bool operator==(const Timetag& other) const
@@ -58,8 +62,11 @@ private:
     };
 
     const quint16 mListenPort = 45567;
+    static const size_t timeoutMs    = 2000;
+    static const size_t hearbeatIntervalMs    = 2000;
 
-    QTimer mTimer;
+    QTimer mTimeoutTimer;
+    QTimer mHeartbeatTimer;
     QList<Timetag> mPacketQueue;
 
     ConnectionStatus mStatus = ConnectionStatus::Disconnected;
