@@ -76,7 +76,9 @@ Page {
             target: remoteConnection
             onStatusChanged: {
             switch (newStatus) {
-            case RemoteConnection.Connected: col.state = "connected"
+            case RemoteConnection.Connected:
+            case RemoteConnection.ActiveMeasurement:
+                col.state = "connected"
                 break;
             case RemoteConnection.Disconnected: col.state = "disconnected"
                 break;

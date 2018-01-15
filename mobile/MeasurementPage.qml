@@ -1,11 +1,12 @@
 import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
+import Mobile 1.0
 
 ColumnLayout {
     id: col
     height: parent.height
-    state: "unconnected"
+    state: "disconnected"
 
     property real displayHeight : height * 0.85
     function moveToTop(newTop) {
@@ -18,9 +19,28 @@ ColumnLayout {
         }
     }
 
+    Connections {
+        target: remoteConnection
+        onStatusChanged: {
+        switch (newStatus) {
+        case RemoteConnection.Connected:
+            col.state = "idle"
+            break;
+        case RemoteConnection.Disconnected:
+            col.state = "disconnected"
+            break;
+        case RemoteConnection.ActiveMeasurement:
+            col.state = "activeMeasurement"
+            break;
+        case RemoteConnection.ErrInvalidAddress:
+            break;
+        }
+        }
+    }
+
     states: [
         State {
-            name: "unconnected"
+            name: "disconnected"
             PropertyChanges {
                 target: measurementButton; enabled: false }
         },
@@ -33,9 +53,6 @@ ColumnLayout {
         State {
             name: "activeMeasurement"
             PropertyChanges { target: measurementButton; text: qsTr("Stop measurement") }
-            PropertyChanges { target: boxPerMinute; state: "activated" }
-            PropertyChanges { target: boxPerHour;   state: "activated" }
-            PropertyChanges { target: boxPerDay;    state: "activated" }
         }
     ]
 
@@ -101,9 +118,18 @@ ColumnLayout {
         Layout.preferredWidth: parent.width * 0.6
         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
         Layout.preferredHeight: 70
-// TODO:        enabled: false
         text: qsTr("Start measurement")
         font.pointSize: height * 0.3
+        onClicked: {
+            if (parent.state == "idle")
+            {
+                remoteConnection.startMeasurement();
+            }
+            else if (parent.state == "activeMeasurement")
+            {
+                remoteConnection.stopMeasurement();
+            }
+        }
     }
 
     Connections {
