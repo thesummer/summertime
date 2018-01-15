@@ -23,7 +23,17 @@ RemoteConnection::RemoteConnection(QObject *parent) :
 void
 RemoteConnection::handlePacketTimeout()
 {
-    std::cout << "Warning: Packet timed out" << std::endl;
+    qWarning("Warning: Packet timed out");
+    switch (mStatus)
+    {
+    case ConnectionStatus::ActiveMeasurement:
+        stopMeasurement();
+    case ConnectionStatus::Connected:
+        disconnectSocket();
+        break;
+    default:
+        break;
+    }
 }
 
 void
@@ -34,12 +44,14 @@ RemoteConnection::connectSocket(QString ipAddress)
         if (mRemoteAddress.setAddress(ipAddress) && mSocket.bind(mListenPort))
         {
             mHeartbeatTimer.start();
+            qDebug("Started Heartbeat timer");
             mStatus = ConnectionStatus::Connected;
         }
         else
         {
             mStatus = ConnectionStatus::ErrInvalidAddress;
         }
+        qDebug("Changed status to Connected");
         emit statusChanged(mStatus);
     }
 }
@@ -47,13 +59,14 @@ RemoteConnection::connectSocket(QString ipAddress)
 void
 RemoteConnection::disconnectSocket()
 {
-    if (mStatus == ConnectionStatus::Connected)
+    if (mStatus == ConnectionStatus::Connected || mStatus == ConnectionStatus::ActiveMeasurement)
     {
+        mHeartbeatTimer.stop();
+        mTimeoutTimer.stop();
         mSocket.close();
         mPacketQueue.clear();
-        mTimeoutTimer.stop();
-        mHeartbeatTimer.stop();
         mStatus = ConnectionStatus::Disconnected;
+        qDebug("Changed status to Disconnected");
         emit statusChanged(mStatus);
     }
 }
@@ -114,7 +127,41 @@ void
 RemoteConnection::sendHeartbeat()
 {
     protocol::PingPacket heartbeatRequest;
+    qDebug("sending Heartbeat");
     sendPacket(heartbeatRequest);
+}
+
+void
+RemoteConnection::startMeasurement()
+{
+    if (mStatus == ConnectionStatus::ActiveMeasurement)
+    {
+        stopMeasurement();
+    }
+
+    sendPacket(protocol::StartMeasurementPacket());
+
+    // We set the state to active
+    // If the packet fails to arrive and times out
+    // the timeout handler is responsible for changing the status again.
+    mStatus = ConnectionStatus::ActiveMeasurement;
+    qDebug("Changed status to ActiveMeasurement");
+    emit statusChanged(mStatus);
+}
+
+void
+RemoteConnection::stopMeasurement()
+{
+    sendPacket(protocol::StopMeasurementPacket());
+
+    // Only change status to connected if the measurement was active before
+    // If the timeout handler changed it to disconnected don't change it.
+    if (mStatus == ConnectionStatus::ActiveMeasurement)
+    {
+        mStatus = ConnectionStatus::Connected;
+        qDebug("Changed status to Connected");
+        emit statusChanged(mStatus);
+    }
 }
 
 void
@@ -124,6 +171,15 @@ RemoteConnection::updateTimer()
     {
         // Will restart the timer. As the oldest packet is always in last
         // restarting on the same packet is ok.
-        mTimeoutTimer.start(mPacketQueue.last().timestamp.msecsTo(QDateTime::currentDateTime().addMSecs(timeoutMs)));
+        auto timeout = QDateTime::currentDateTime().msecsTo(mPacketQueue.last().timestamp.addMSecs(timeoutMs));
+        if (timeout > 0)
+        {
+            mTimeoutTimer.start(timeout);
+        }
+        else
+        {
+            mPacketQueue.pop_back();
+            handlePacketTimeout();
+        }
     }
 }

@@ -20,6 +20,7 @@ public:
     {
         Disconnected,
         Connected,
+        ActiveMeasurement,
         ErrInvalidAddress
     };
     Q_ENUMS(ConnectionStatus) // Make the enum known to qml
@@ -46,6 +47,12 @@ public slots:
     void
     sendHeartbeat();
 
+    void
+    startMeasurement();
+
+    void
+    stopMeasurement();
+
 private:
     void
     updateTimer();
@@ -63,7 +70,7 @@ private:
 
     const quint16 mListenPort = 45567;
     static const size_t timeoutMs    = 2000;
-    static const size_t hearbeatIntervalMs    = 2000;
+    static const size_t hearbeatIntervalMs = 2000;
 
     QTimer mTimeoutTimer;
     QTimer mHeartbeatTimer;
