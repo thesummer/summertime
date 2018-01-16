@@ -95,11 +95,30 @@ void RemoteConnection::handleNewPacket()
         protocol::PingPacket packet;
         if (packet.deserialize(reader))
         {
-            protocol::AcknowledgePacket ack(packet);
-            sendPacket(ack);
+            sendPacket(protocol::AcknowledgePacket(packet));
         }
     }
-
+    case protocol::PacketType::liveMeasurement:
+    {
+        protocol::LiveMeasurementPacket packet;
+        if (packet.deserialize(reader))
+        {
+            emit updateLiveData(packet.getTickFrequency());
+            sendPacket(protocol::AcknowledgePacket(packet));
+        }
+    }
+    case protocol::PacketType::lastMinuteCount:
+    {
+        protocol::LastMinuteCountPacket packet;
+        if (packet.deserialize(reader))
+        {
+            emit appendNewMinuteCount(packet.getLastMinuteCount());
+            sendPacket(protocol::AcknowledgePacket(packet));
+        }
+    }
+    default:
+        qDebug("Received unexpected package type");
+        break;
     }
 }
 

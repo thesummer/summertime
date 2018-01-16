@@ -3,7 +3,6 @@ QT += qml quick
 CONFIG += c++11
 
 SOURCES += main.cpp \
-    datasource.cpp \
     remoteconnection.cpp \
     packet.cpp \
     qdatastreamwriter.cpp
