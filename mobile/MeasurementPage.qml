@@ -133,6 +133,15 @@ ColumnLayout {
     }
 
     Connections {
+        target: remoteConnection
+        onUpdateLiveData: {
+            boxPerMinute.value = newRate * 60.0
+            boxPerHour.value   = boxPerMinute.value * 60.0
+            boxPerDay.value    = boxPerHour.value * 24.0
+        }
+    }
+
+    Connections {
         target: boxPerMinute
         onClicked: { col.moveToTop(target) }
     }

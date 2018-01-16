@@ -26,7 +26,14 @@ public:
     Q_ENUMS(ConnectionStatus) // Make the enum known to qml
 
 signals:
-    void statusChanged(ConnectionStatus newStatus);
+    void
+    statusChanged(ConnectionStatus newStatus);
+
+    void
+    updateLiveData(float newRate);
+
+    void
+    appendNewMinuteCount(float newCount);
 
 public slots:
     void
