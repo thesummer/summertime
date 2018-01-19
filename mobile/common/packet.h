@@ -32,6 +32,12 @@ public:
     {
     }
 
+    Packet(const Packet& other) :
+        mSequenceCount(other.mSequenceCount),
+        mPacketType(other.mPacketType)
+    {
+    }
+
     virtual PacketType
     getPacketType() const
     {

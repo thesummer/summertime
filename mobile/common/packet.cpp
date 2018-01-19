@@ -22,7 +22,7 @@ PingPacket::serialize(SerializerInterface &writer) const
 bool
 PingPacket::deserialize(DeserializerInterface &reader)
 {
-    if (reader.getSize() < getSerializedSize() && reader.readUint16() != static_cast<uint16_t>(getPacketType()))
+    if (reader.getSize() < getSerializedSize() || reader.readUint16() != static_cast<uint16_t>(getPacketType()))
     {
         return false;
     }
@@ -58,7 +58,7 @@ AcknowledgePacket::serialize(SerializerInterface &writer) const
 bool
 AcknowledgePacket::deserialize(DeserializerInterface &reader)
 {
-    if (reader.getSize() < getSerializedSize() && reader.readUint16() != static_cast<uint16_t>(getPacketType()))
+    if (reader.getSize() < getSerializedSize() || reader.readUint16() != static_cast<uint16_t>(getPacketType()))
     {
         return false;
     }
@@ -88,7 +88,7 @@ StartMeasurementPacket::serialize(SerializerInterface &writer) const
 bool
 StartMeasurementPacket::deserialize(DeserializerInterface &reader)
 {
-    if (reader.getSize() < getSerializedSize() && reader.readUint16() != static_cast<uint16_t>(getPacketType()))
+    if (reader.getSize() < getSerializedSize() || reader.readUint16() != static_cast<uint16_t>(getPacketType()))
     {
         return false;
     }
@@ -117,7 +117,7 @@ StopMeasurementPacket::serialize(SerializerInterface &writer) const
 bool
 StopMeasurementPacket::deserialize(DeserializerInterface &reader)
 {
-    if (reader.getSize() < getSerializedSize() && reader.readUint16() != static_cast<uint16_t>(getPacketType()))
+    if (reader.getSize() < getSerializedSize() || reader.readUint16() != static_cast<uint16_t>(getPacketType()))
     {
         return false;
     }
@@ -147,7 +147,7 @@ LiveMeasurementPacket::serialize(SerializerInterface &writer) const
 bool
 LiveMeasurementPacket::deserialize(DeserializerInterface &reader)
 {
-    if (reader.getSize() < getSerializedSize() && reader.readUint16() != static_cast<uint16_t>(getPacketType()))
+    if (reader.getSize() < getSerializedSize() || reader.readUint16() != static_cast<uint16_t>(getPacketType()))
     {
         return false;
     }
@@ -178,7 +178,7 @@ LastMinuteCountPacket::serialize(SerializerInterface &writer) const
 bool
 LastMinuteCountPacket::deserialize(DeserializerInterface &reader)
 {
-    if (reader.getSize() < getSerializedSize() && reader.readUint16() != static_cast<uint16_t>(getPacketType()))
+    if (reader.getSize() < getSerializedSize() || reader.readUint16() != static_cast<uint16_t>(getPacketType()))
     {
         return false;
     }
