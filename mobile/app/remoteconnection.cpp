@@ -11,13 +11,16 @@ RemoteConnection::RemoteConnection(QObject *parent) :
 {
     // Timeout timer is triggered manually
     mTimeoutTimer.setSingleShot(true);
-    connect(&mTimeoutTimer, &QTimer::timeout, this, &RemoteConnection::handlePacketTimeout);
+    connect(&mTimeoutTimer, &QTimer::timeout, this,
+            &RemoteConnection::handlePacketTimeout);
     // Heartbeat timer is periodical
     mHeartbeatTimer.setSingleShot(false);
     mHeartbeatTimer.setInterval(hearbeatIntervalMs);
-    connect(&mHeartbeatTimer, &QTimer::timeout, this, &RemoteConnection::sendHeartbeat);
+    connect(&mHeartbeatTimer, &QTimer::timeout, this,
+            &RemoteConnection::sendHeartbeat);
 
-    connect(&mSocket, &QUdpSocket::readyRead, this, &RemoteConnection::handleNewPacket);
+    connect(&mSocket, &QUdpSocket::readyRead, this,
+            &RemoteConnection::handleNewPacket);
 }
 
 void
@@ -89,6 +92,7 @@ void RemoteConnection::handleNewPacket()
             mPacketQueue.removeOne(Timetag{QDateTime(), packet.getAckSequenceCount()});
             updateTimer();
         }
+        break;
     }
     case protocol::PacketType::ping:
     {
@@ -97,6 +101,7 @@ void RemoteConnection::handleNewPacket()
         {
             sendPacket(protocol::AcknowledgePacket(packet));
         }
+        break;
     }
     case protocol::PacketType::liveMeasurement:
     {
@@ -106,6 +111,7 @@ void RemoteConnection::handleNewPacket()
             emit updateLiveData(packet.getTickFrequency());
             sendPacket(protocol::AcknowledgePacket(packet));
         }
+        break;
     }
     case protocol::PacketType::lastMinuteCount:
     {
@@ -115,6 +121,7 @@ void RemoteConnection::handleNewPacket()
             emit appendNewMinuteCount(packet.getLastMinuteCount());
             sendPacket(protocol::AcknowledgePacket(packet));
         }
+        break;
     }
     default:
         qDebug("Received unexpected package type");
@@ -132,8 +139,11 @@ RemoteConnection::sendPacket(const protocol::Packet& packet)
                                   mRemotePort));
     if (ret == static_cast<qint64>(packet.getSerializedSize()))
     {
-        mPacketQueue.push_front(Timetag{QDateTime::currentDateTime(), packet.getSequenceCount()});
-        updateTimer();
+        if (packet.getPacketType() != protocol::PacketType::acknowledge)
+        {
+            mPacketQueue.push_front(Timetag{QDateTime::currentDateTime(), packet.getSequenceCount()});
+            updateTimer();
+        }
         return true;
     }
     else
@@ -146,7 +156,6 @@ void
 RemoteConnection::sendHeartbeat()
 {
     protocol::PingPacket heartbeatRequest;
-    qDebug("sending Heartbeat");
     sendPacket(heartbeatRequest);
 }
 
@@ -193,6 +202,7 @@ RemoteConnection::updateTimer()
         auto timeout = QDateTime::currentDateTime().msecsTo(mPacketQueue.last().timestamp.addMSecs(timeoutMs));
         if (timeout > 0)
         {
+            qDebug("Starting timeout timer");
             mTimeoutTimer.start(timeout);
         }
         else
@@ -200,5 +210,10 @@ RemoteConnection::updateTimer()
             mPacketQueue.pop_back();
             handlePacketTimeout();
         }
+    }
+    else
+    {
+        qDebug("Stopping timeout timer");
+        mTimeoutTimer.stop();
     }
 }
