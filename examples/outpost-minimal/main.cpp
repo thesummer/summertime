@@ -1,122 +1,225 @@
-/*
- * ESPRSSIF MIT License
+/**
+ * Copyright (c) 2014 - 2017, Nordic Semiconductor ASA
  *
- * Copyright (c) 2015 <ESPRESSIF SYSTEMS (SHANGHAI) PTE LTD>
+ * All rights reserved.
  *
- * Permission is hereby granted for use on ESPRESSIF SYSTEMS ESP8266 only, in which case,
- * it is free of charge, to any person obtaining a copy of this software and associated
- * documentation files (the "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the Software is furnished
- * to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all copies or
- * substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
- * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
- * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form, except as embedded into a Nordic
+ *    Semiconductor ASA integrated circuit in a product or a software update for
+ *    such product, must reproduce the above copyright notice, this list of
+ *    conditions and the following disclaimer in the documentation and/or other
+ *    materials provided with the distribution.
+ *
+ * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
+ *    contributors may be used to endorse or promote products derived from this
+ *    software without specific prior written permission.
+ *
+ * 4. This software, with or without modification, must only be used with a
+ *    Nordic Semiconductor ASA integrated circuit.
+ *
+ * 5. Any software provided in binary form under this license must not be reverse
+ *    engineered, decompiled, modified and/or disassembled.
+ *
+ * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL NORDIC SEMICONDUCTOR ASA OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#include "hello_thread.h"
+// Board/nrf6310/ble/ble_app_hrs_rtx/main.c
+/**
+ *
+ * @brief Heart Rate Service Sample Application with RTX main file.
+ *
+ * This file contains the source code for a sample application using RTX and the
+ * Heart Rate service (and also Battery and Device Information services).
+ * This application uses the @ref srvlib_conn_params module.
+ */
 
-extern "C" 
+#include "ble_thread.h"
+
+SoftDeviceThread bleThread;
+
+extern "C"
 {
-#include "esp_common.h"
-#include "uart.h"
-char test_mode = 4;
 
-/******************************************************************************
- * FunctionName : user_rf_cal_sector_set
- * Description  : SDK just reversed 4 sectors, used for rf init data and paramters.
- *                We add this function to force users to set rf cal sector, since
- *                we don't know which sector is free in user's application.
- *                sector map for last several sectors : ABCCC
- *                A : rf cal
- *                B : rf init data
- *                C : sdk parameters
- * Parameters   : none
- * Returns      : rf cal sector
-*******************************************************************************/
-uint32 user_rf_cal_sector_set(void);
-uint32 user_rf_cal_sector_set(void)
+#include <stdint.h>
+#include <string.h>
+#include "nordic_common.h"
+#include "nrf.h"
+#include "app_error.h"
+#include "ble.h"
+#include "ble_advertising.h"
+#include "ble_bas.h"
+#include "ble_hrs.h"
+#include "ble_conn_params.h"
+#include "app_timer.h"
+#include "peer_manager.h"
+#include "bsp_btn_ble.h"
+#include "FreeRTOS.h"
+#include "timers.h"
+#include "semphr.h"
+#include "fstorage.h"
+#include "ble_conn_state.h"
+#include "softdevice_handler.h"
+#include "nrf_drv_clock.h"
+#define NRF_LOG_MODULE_NAME "APP"
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+
+
+/**@brief Function for receiving the Application's BLE Stack events.
+ *
+ * @param[in]   p_ble_evt   Bluetooth stack event.
+ */
+static void on_ble_evt(ble_evt_t* p_ble_evt)
 {
-    flash_size_map size_map = system_get_flash_size_map();
-    uint32 rf_cal_sec = 0;
+    static uint16_t m_conn_handle;
+    uint32_t err_code;
 
-    switch (size_map) {
-        case FLASH_SIZE_4M_MAP_256_256:
-            rf_cal_sec = 128 - 5;
-            break;
+    switch (p_ble_evt->header.evt_id)
+    {
+        case BLE_GAP_EVT_CONNECTED:
+            NRF_LOG_INFO("Connected\r\n");
+            m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+            break; // BLE_GAP_EVT_CONNECTED
 
-        case FLASH_SIZE_8M_MAP_512_512:
-            rf_cal_sec = 256 - 5;
-            break;
+        case BLE_GAP_EVT_DISCONNECTED:
+            NRF_LOG_INFO("Disconnected\r\n");
+            m_conn_handle = BLE_CONN_HANDLE_INVALID;
+            break; // BLE_GAP_EVT_DISCONNECTED
 
-        case FLASH_SIZE_16M_MAP_512_512:
-        case FLASH_SIZE_16M_MAP_1024_1024:
-            rf_cal_sec = 512 - 5;
-            break;
+        case BLE_GATTC_EVT_TIMEOUT:
+            // Disconnect on GATT Client timeout event.
+            NRF_LOG_DEBUG("GATT Client Timeout.\r\n");
+            err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gattc_evt.conn_handle,
+                                             BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+            APP_ERROR_CHECK(err_code);
+            break; // BLE_GATTC_EVT_TIMEOUT
 
-        case FLASH_SIZE_32M_MAP_512_512:
-        case FLASH_SIZE_32M_MAP_1024_1024:
-            rf_cal_sec = 1024 - 5;
-            break;
+        case BLE_GATTS_EVT_TIMEOUT:
+            // Disconnect on GATT Server timeout event.
+            NRF_LOG_DEBUG("GATT Server Timeout.\r\n");
+            err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gatts_evt.conn_handle,
+                                             BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+            APP_ERROR_CHECK(err_code);
+            break; // BLE_GATTS_EVT_TIMEOUT
+
+        case BLE_EVT_USER_MEM_REQUEST:
+            err_code = sd_ble_user_mem_reply(m_conn_handle, NULL);
+            APP_ERROR_CHECK(err_code);
+            break; // BLE_EVT_USER_MEM_REQUEST
+
+        case BLE_GATTS_EVT_RW_AUTHORIZE_REQUEST:
+        {
+            ble_gatts_evt_rw_authorize_request_t  req;
+            ble_gatts_rw_authorize_reply_params_t auth_reply;
+
+            req = p_ble_evt->evt.gatts_evt.params.authorize_request;
+
+            if (req.type != BLE_GATTS_AUTHORIZE_TYPE_INVALID)
+            {
+                if ((req.request.write.op == BLE_GATTS_OP_PREP_WRITE_REQ)     ||
+                    (req.request.write.op == BLE_GATTS_OP_EXEC_WRITE_REQ_NOW) ||
+                    (req.request.write.op == BLE_GATTS_OP_EXEC_WRITE_REQ_CANCEL))
+                {
+                    if (req.type == BLE_GATTS_AUTHORIZE_TYPE_WRITE)
+                    {
+                        auth_reply.type = BLE_GATTS_AUTHORIZE_TYPE_WRITE;
+                    }
+                    else
+                    {
+                        auth_reply.type = BLE_GATTS_AUTHORIZE_TYPE_READ;
+                    }
+                    auth_reply.params.write.gatt_status = 0;//APP_FEATURE_NOT_SUPPORTED;
+                    err_code = sd_ble_gatts_rw_authorize_reply(p_ble_evt->evt.gatts_evt.conn_handle,
+                                                               &auth_reply);
+                    APP_ERROR_CHECK(err_code);
+                }
+            }
+        } break; // BLE_GATTS_EVT_RW_AUTHORIZE_REQUEST
 
         default:
-            rf_cal_sec = 0;
+            // No implementation needed.
             break;
     }
-
-    return rf_cal_sec;
 }
 
-/******************************************************************************
- * FunctionName : user_init
- * Description  : entry of user application, init user function here
- * Parameters   : none
- * Returns      : none
-*******************************************************************************/
-
-HelloThread helloThread;
-
-LOCAL void testTask(void*)
+#if NRF_LOG_ENABLED
+/**@brief Thread for handling the logger.
+ *
+ * @details This thread is responsible for processing log entries if logs are deferred.
+ *          Thread flushes all log entries and suspends. It is resumed by idle task hook.
+ *
+ * @param[in]   arg   Pointer used for passing some arbitrary information (context) from the
+ *                    osThreadCreate() call to the thread.
+ */
+static void logger_thread(void * arg)
 {
+    UNUSED_PARAMETER(arg);
+
     while(1)
     {
-      os_printf("%s\n", "Hallo Welt22!");
-      vTaskDelay(1000 / portTICK_RATE_MS);
+        NRF_LOG_FLUSH();
+
+        vTaskSuspend(NULL); // Suspend myself
+    }
+}
+#endif //NRF_LOG_ENABLED
+
+/**@brief A function which is hooked to idle task.
+ * @note Idle hook must be enabled in FreeRTOS configuration (configUSE_IDLE_HOOK).
+ */
+void vApplicationIdleHook( void )
+{
+//     vTaskResume(m_logger_thread);
+}
+
+/**@brief Function for application main entry.
+ */
+int main(void)
+{
+    // Do not start any interrupt that uses system functions before system initialisation.
+    // The best solution is to start the OS before any other initalisation.
+    uint32_t                err_code;
+
+    bleThread.initialize();
+
+    err_code = NRF_LOG_INIT(NULL);
+    APP_ERROR_CHECK(err_code);
+
+#if NRF_LOG_ENABLED
+    // Start execution.
+    if (pdPASS != xTaskCreate(logger_thread, "LOGGER", 256, NULL, 1, &m_logger_thread))
+    {
+        APP_ERROR_HANDLER(NRF_ERROR_NO_MEM);
+    }
+#endif //NRF_LOG_ENABLED
+
+    /* Activate deep sleep mode */
+    SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+
+    // Start FreeRTOS scheduler. Will not return
+    outpost::rtos::Thread::startScheduler();
+
+    while (true)
+    {
+        APP_ERROR_HANDLER(NRF_ERROR_FORBIDDEN);
     }
 }
 
-void user_init(void);
-
-void user_init(void)
-{
-    UART_ConfigTypeDef uart_config;
-    uart_config.baud_rate = BIT_RATE_115200;
-    uart_config.data_bits = UART_WordLength_8b;
-    uart_config.parity = USART_Parity_None;
-    uart_config.stop_bits = USART_StopBits_1;
-    uart_config.flow_ctrl = USART_HardwareFlowControl_None;
-    uart_config.UART_RxFlowThresh = 120;
-    uart_config.UART_InverseMask = UART_None_Inverse;
-    UART_ParamConfig(UART0, &uart_config);
-    UART_SetPrintPort(UART0);
-    
-//     xTaskCreate(testTask, (const signed char*) "testTask", 512, NULL, 4, NULL);
-    helloThread.start();
-    
-//     os_printf("Hello from Outpost\n");
-//     helloThread.start();
-//     os_printf("Thread started. Starting scheduler...\n");
-//     outpost::rtos::Thread::startScheduler();
-//     os_printf("SDK version:%s\n", system_get_sdk_version());
-//     wifi_set_opmode(STATION_MODE);
-//     websocket_start(&test_mode);
 }
 
-}
+
+

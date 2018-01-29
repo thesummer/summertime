@@ -3,8 +3,9 @@
 
 import os
 
+programName = 'summertime'
+
 rootpath = '../../'
-outpostpath = os.path.join(rootpath, 'outpost-core')
 
 envGlobal = Environment(toolpath=[os.path.join(rootpath, 'scons-build-tools/site_tools')],
                         buildroot=[rootpath + 'build/'],
@@ -28,28 +29,20 @@ buildfolder = os.path.join(rootpath, 'build')
 envGlobal.Tool('settings_buildpath')
 envGlobal['BUILDPATH'] = os.path.abspath(buildfolder)
 envGlobal['LIBINSTALLPATH'] = os.path.join(envGlobal['BUILDPATH'], 'lib')
+envGlobal.Append(LIBPATH=envGlobal['LIBINSTALLPATH'])
 
 envGlobal.RemoveFromList('CCFLAGS_other', ['-fshort-wchar', '-finline-limit=10000'])
 
-#TODO: Include freertosconfig.h
-#envGlobal.Append(CPPPATH='
-
 envGlobal.SConscript(os.path.join(rootpath, 'SConscript.sdk'), exports='envGlobal')
-envGlobal.SConscript(os.path.join(outpostpath, 'modules/SConscript.library'), exports='envGlobal')
-
-
 env = envGlobal.Clone()
 
 env.AppendUnique(LIBS=[
-    'outpost_rtos',
-    'outpost_time',
-    'outpost_utils',
     'nrf_sdk',
 ])
 
-files = env.Glob('*.cpp')
+files = env.Glob('*.c')
 
-program = env.Program('example_outpost-minimal', files)
+program = env.Program(programName, files)
 #envGlobal.Size(0)
 envGlobal.Alias('build', program)
 envGlobal.Alias('build', env.Size(program))
