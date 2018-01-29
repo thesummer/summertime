@@ -1,0 +1,240 @@
+#!/usr/bin/env python
+
+import os
+from glob import glob
+Import('envGlobal')
+
+envGlobal.SetDefault(SDKPATH = os.path.abspath('nRF5_SDK_12.3.0'))
+
+sdkpath = envGlobal['SDKPATH']
+
+#envGlobal.Append(CPPPATH=glob(sdkpath + '/components/drivers_nrf/*/'))
+#envGlobal.Append(CPPPATH=glob(sdkpath + '/components/ble/*/'))
+#envGlobal.Append(CPPPATH=glob(sdkpath + '/components/ble/ble_services/*/'))
+#envGlobal.Append(CPPPATH=glob(sdkpath + '/components/libraries/*/'))
+                         
+#envGlobal.Append(CPPPATH=[os.path.join(sdkpath, 'external', 'freertos', 'portable', 'GCC', 'nrf51'),
+                          #os.path.join(sdkpath, 'external', 'freertos', 'portable', 'CMSIS', 'nrf51'),
+                          #os.path.join(sdkpath, 'external', 'freertos', 'source', 'include'),
+                          ##os.path.join(sdkpath, 'external', 'freertos', 'config'),
+                          #os.path.join(sdkpath, 'components', 'softdevice', 's130', 'headers'),
+                          #os.path.join(sdkpath, 'components', 'softdevice', 'common', 'softdevice_handler'),
+                          #os.path.join(sdkpath, 'components', 'libraries', 'log', 'src'),
+                          #os.path.join(sdkpath, 'components', 'toolchain', 'cmsis', 'include'),
+                          #os.path.join(sdkpath, 'components', 'toolchain'),
+                          #os.path.join(sdkpath, 'components', 'device'),
+                          #os.path.join(sdkpath, 'components', 'boards')])
+
+envGlobal.Append(CPPPATH=[
+  sdkpath + '/components/drivers_nrf/comp',
+  sdkpath + '/components/drivers_nrf/twi_master',
+  sdkpath + '/components/ble/ble_services/ble_ancs_c',
+  sdkpath + '/components/ble/ble_services/ble_ias_c',
+  sdkpath + '/components/softdevice/s130/headers',
+  sdkpath + '/components/libraries/pwm',
+  sdkpath + '/components/libraries/usbd/class/cdc/acm',
+  sdkpath + '/components/libraries/usbd/class/hid/generic',
+  sdkpath + '/components/libraries/usbd/class/msc',
+  sdkpath + '/components/libraries/usbd/class/hid',
+  sdkpath + '/components/libraries/log',
+  sdkpath + '/components/ble/ble_services/ble_gls',
+  sdkpath + '/components/libraries/fstorage',
+  sdkpath + '/components/drivers_nrf/i2s',
+  sdkpath + '/components/libraries/gpiote',
+  sdkpath + '/components/drivers_nrf/gpiote',
+  sdkpath + '/components/boards',
+  sdkpath + '/components/drivers_nrf/common',
+  sdkpath + '/components/ble/ble_advertising',
+  sdkpath + '/components/drivers_nrf/adc',
+  sdkpath + '/components/softdevice/s130/headers/nrf51',
+  sdkpath + '/external/freertos/portable/GCC/nrf51',
+  sdkpath + '/components/ble/ble_services/ble_bas_c',
+  sdkpath + '/components/ble/ble_services/ble_hrs_c',
+  sdkpath + '/components/libraries/queue',
+  sdkpath + '/components/ble/ble_dtm',
+  sdkpath + '/components/toolchain/cmsis/include',
+  sdkpath + '/components/ble/ble_services/ble_rscs_c',
+  sdkpath + '/components/drivers_nrf/uart',
+  sdkpath + '/components/ble/common',
+  sdkpath + '/components/ble/ble_services/ble_lls',
+  sdkpath + '/components/drivers_nrf/wdt',
+  sdkpath + '/components/libraries/hardfault/nrf51',
+  sdkpath + '/components/libraries/bsp',
+  #sdkpath + '/external/freertos/config',
+  sdkpath + '/components/ble/ble_services/ble_bas',
+  sdkpath + '/components/libraries/experimental_section_vars',
+  sdkpath + '/components/ble/ble_services/ble_ans_c',
+  sdkpath + '/components/libraries/slip',
+  sdkpath + '/components/libraries/mem_manager',
+  sdkpath + '/external/segger_rtt',
+  sdkpath + '/components/libraries/usbd/class/cdc',
+  sdkpath + '/components/drivers_nrf/hal',
+  sdkpath + '/components/ble/ble_services/ble_nus_c',
+  sdkpath + '/components/drivers_nrf/rtc',
+  sdkpath + '/components/ble/ble_services/ble_ias',
+  sdkpath + '/components/libraries/usbd/class/hid/mouse',
+  sdkpath + '/components/drivers_nrf/ppi',
+  sdkpath + '/components/ble/ble_services/ble_dfu',
+  sdkpath + '/components/drivers_nrf/twis_slave',
+  sdkpath + '/components',
+  sdkpath + '/components/libraries/scheduler',
+  sdkpath + '/components/ble/ble_services/ble_lbs',
+  sdkpath + '/components/ble/ble_services/ble_hts',
+  sdkpath + '/components/drivers_nrf/delay',
+  sdkpath + '/components/libraries/crc16',
+  sdkpath + '/components/drivers_nrf/timer',
+  sdkpath + '/components/libraries/util',
+  sdkpath + '/components/drivers_nrf/pwm',
+  sdkpath + '/components/libraries/csense_drv',
+  sdkpath + '/components/libraries/csense',
+  sdkpath + '/components/drivers_nrf/rng',
+  sdkpath + '/components/libraries/low_power_pwm',
+  sdkpath + '/components/libraries/hardfault',
+  sdkpath + '/components/ble/ble_services/ble_cscs',
+  sdkpath + '/components/libraries/uart',
+  sdkpath + '/components/libraries/hci',
+  sdkpath + '/components/libraries/usbd/class/hid/kbd',
+  sdkpath + '/components/drivers_nrf/spi_slave',
+  sdkpath + '/components/drivers_nrf/lpcomp',
+  sdkpath + '/components/libraries/timer',
+  sdkpath + '/components/drivers_nrf/power',
+  sdkpath + '/components/libraries/usbd/config',
+  sdkpath + '/components/toolchain',
+  sdkpath + '/components/libraries/led_softblink',
+  sdkpath + '/components/drivers_nrf/qdec',
+  sdkpath + '/components/ble/ble_services/ble_cts_c',
+  sdkpath + '/components/drivers_nrf/spi_master',
+  sdkpath + '/components/ble/ble_services/ble_nus',
+  sdkpath + '/components/ble/ble_services/ble_hids',
+  sdkpath + '/components/drivers_nrf/pdm',
+  sdkpath + '/components/libraries/crc32',
+  sdkpath + '/external/freertos/source/include',
+  sdkpath + '/components/libraries/usbd/class/audio',
+  sdkpath + '/components/libraries/sensorsim',
+  sdkpath + '/components/ble/peer_manager',
+  sdkpath + '/components/drivers_nrf/swi',
+  sdkpath + '/components/ble/ble_services/ble_tps',
+  sdkpath + '/components/ble/ble_services/ble_dis',
+  sdkpath + '/components/device',
+  sdkpath + '/components/ble/nrf_ble_gatt',
+  sdkpath + '/components/ble/nrf_ble_qwr',
+  sdkpath + '/components/libraries/button',
+  sdkpath + '/external/freertos/portable/CMSIS/nrf51',
+  sdkpath + '/components/libraries/usbd',
+  sdkpath + '/components/drivers_nrf/saadc',
+  sdkpath + '/components/ble/ble_services/ble_lbs_c',
+  sdkpath + '/components/ble/ble_racp',
+  sdkpath + '/components/toolchain/gcc',
+  sdkpath + '/components/libraries/fds',
+  sdkpath + '/components/libraries/twi',
+  sdkpath + '/components/drivers_nrf/clock',
+  sdkpath + '/components/ble/ble_services/ble_rscs',
+  sdkpath + '/components/drivers_nrf/usbd',
+  sdkpath + '/components/softdevice/common/softdevice_handler',
+  sdkpath + '/components/ble/ble_services/ble_hrs',
+  sdkpath + '/components/libraries/log/src'
+  ])
+
+envGlobal.Append(LIBPATH=[sdkpath + '/components/toolchain/gcc'])
+
+# TODO: Replace
+envGlobal.Append(CPPPATH=os.path.join(envGlobal['SDKPATH'], 'examples', 'ble_peripheral', 'ble_app_hrs_freertos', 'pca10028', 's130', 'config'))
+envGlobal.Append(CPPPATH=os.path.join(envGlobal['SDKPATH'], 'examples', 'ble_peripheral', 'ble_app_hrs_freertos', 'config', 'ble_app_hrs_freertos_pca10028_s130'))
+
+
+envGlobal.AppendUnique(CPPDEFINES=[('__STACK_SIZE', '2048'), 
+                             'NRF51',
+                             ('__HEAP_SIZE', '1024'),
+                             'BOARD_PCA10028',
+                             'NRF51422',
+                             'FREERTOS',
+                             'BLE_STACK_SUPPORT_REQD',
+                             ('NRF_SD_BLE_API_VERSION', '2'),
+                             'SOFTDEVICE_PRESENT',
+                             'S130',
+                             ])
+
+# Default setting is to use -pedantic. Overwrite with only the language standard.
+# Otherwise the library will create lots of warnings due to makro magic
+envGlobal.RemoveFromList('CFLAGS_language', ['-pedantic', '-Wstrict-prototypes', '-Wnested-externs'])
+envGlobal['CCFLAGS_warning'] = ''
+envGlobal['CFLAGS_warning'] = ''
+
+env = envGlobal.Clone()
+
+files = [sdkpath + '/components/libraries/log/src/nrf_log_backend_serial.c',
+         sdkpath + '/components/libraries/log/src/nrf_log_frontend.c',
+         sdkpath + '/components/libraries/button/app_button.c',
+         sdkpath + '/components/libraries/util/app_error.c',
+         sdkpath + '/components/libraries/util/app_error_weak.c',
+         sdkpath + '/components/libraries/timer/app_timer_freertos.c',
+         sdkpath + '/components/libraries/util/app_util_platform.c',
+         sdkpath + '/components/libraries/crc16/crc16.c',
+         sdkpath + '/components/libraries/fds/fds.c',
+         sdkpath + '/components/libraries/fstorage/fstorage.c',
+         sdkpath + '/components/libraries/hardfault/nrf51/handler/hardfault_handler_gcc.c',
+         sdkpath + '/components/libraries/hardfault/hardfault_implementation.c',
+         sdkpath + '/components/libraries/util/nrf_assert.c',
+         sdkpath + '/components/libraries/util/sdk_errors.c',
+         sdkpath + '/components/libraries/util/sdk_mapped_flags.c',
+         sdkpath + '/components/libraries/sensorsim/sensorsim.c',
+         sdkpath + '/external/freertos/source/croutine.c',
+         sdkpath + '/external/freertos/source/event_groups.c',
+         sdkpath + '/external/freertos/source/portable/MemMang/heap_1.c',
+         sdkpath + '/external/freertos/source/list.c',
+         sdkpath + '/external/freertos/portable/GCC/nrf51/port.c',
+         sdkpath + '/external/freertos/portable/CMSIS/nrf51/port_cmsis.c',
+         sdkpath + '/external/freertos/portable/CMSIS/nrf51/port_cmsis_systick.c',
+         sdkpath + '/external/freertos/source/queue.c',
+         sdkpath + '/external/freertos/source/tasks.c',
+         sdkpath + '/external/freertos/source/timers.c',
+         sdkpath + '/components/boards/boards.c',
+         sdkpath + '/components/drivers_nrf/clock/nrf_drv_clock.c',
+         sdkpath + '/components/drivers_nrf/common/nrf_drv_common.c',
+         sdkpath + '/components/drivers_nrf/gpiote/nrf_drv_gpiote.c',
+         sdkpath + '/components/drivers_nrf/uart/nrf_drv_uart.c',
+         sdkpath + '/components/libraries/bsp/bsp.c',
+         sdkpath + '/components/libraries/bsp/bsp_btn_ble.c',
+         sdkpath + '/components/libraries/bsp/bsp_nfc.c',
+         sdkpath + '/components/ble/common/ble_advdata.c',
+         sdkpath + '/components/ble/ble_advertising/ble_advertising.c',
+         sdkpath + '/components/ble/common/ble_conn_params.c',
+         sdkpath + '/components/ble/common/ble_conn_state.c',
+         sdkpath + '/components/ble/common/ble_srv_common.c',
+         sdkpath + '/components/ble/peer_manager/gatt_cache_manager.c',
+         sdkpath + '/components/ble/peer_manager/gatts_cache_manager.c',
+         sdkpath + '/components/ble/peer_manager/id_manager.c',
+         sdkpath + '/components/ble/nrf_ble_gatt/nrf_ble_gatt.c',
+         sdkpath + '/components/ble/peer_manager/peer_data.c',
+         sdkpath + '/components/ble/peer_manager/peer_data_storage.c',
+         sdkpath + '/components/ble/peer_manager/peer_database.c',
+         sdkpath + '/components/ble/peer_manager/peer_id.c',
+         sdkpath + '/components/ble/peer_manager/peer_manager.c',
+         sdkpath + '/components/ble/peer_manager/pm_buffer.c',
+         sdkpath + '/components/ble/peer_manager/pm_mutex.c',
+         sdkpath + '/components/ble/peer_manager/security_dispatcher.c',
+         sdkpath + '/components/ble/peer_manager/security_manager.c',
+         sdkpath + '/components/toolchain/gcc/gcc_startup_nrf51.S',
+         sdkpath + '/components/toolchain/system_nrf51.c',
+         sdkpath + '/components/ble/ble_services/ble_bas/ble_bas.c',
+         sdkpath + '/components/ble/ble_services/ble_dis/ble_dis.c',
+         sdkpath + '/components/ble/ble_services/ble_hrs/ble_hrs.c',
+         sdkpath + '/components/softdevice/common/softdevice_handler/softdevice_handler.c'
+         ]
+
+#envGlobal['LINKCOM'] = '$LINK -o $TARGET $LINKFLAGS $__RPATH $SOURCES $_LIBDIRFLAGS $_LIBFLAGS -Wl,--start-group $SDK_LIBS -Wl,--end-group'
+
+linkFile = os.path.join(sdkpath, 'examples/ble_peripheral/ble_app_hrs_freertos/pca10028/s130/armgcc/ble_app_hrs_freertos_gcc_nrf51.ld')
+
+objects = []
+for file in files:
+	objects.append(env.Object(file))
+envGlobal.Append(objects={'nrf_sdk': objects})
+
+library = env.StaticLibrary('nrf_sdk', objects)
+envGlobal.Install(envGlobal['LIBINSTALLPATH'], library)
+
+print("Linkfile: " + linkFile)
+
+envGlobal.SetDefault(LD_FILE = linkFile)
+envGlobal.Append(LINKFLAGS_target=['-T$LD_FILE'])

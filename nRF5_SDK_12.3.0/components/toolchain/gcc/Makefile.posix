@@ -1,0 +1,4 @@
+GNU_INSTALL_ROOT := /home/jan/workspace/summertime/nRF5_SDK_12.3.0/gcc-arm-none-eabi-5_2-2015q4
+  #/usr/local/gcc-arm-none-eabi-4_9-2015q3
+GNU_VERSION := 4.9.3
+GNU_PREFIX := arm-none-eabi
