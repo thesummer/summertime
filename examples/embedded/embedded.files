@@ -1,0 +1,5 @@
+../../SConscript.sdk
+SConstruct
+main.c
+st_service.c
+st_service.h
