@@ -1,4 +1,5 @@
 .
+./config
 ../../nRF5_SDK_12.3.0/components
 ../../nRF5_SDK_12.3.0/components/ant/ant_channel_config
 ../../nRF5_SDK_12.3.0/components/ant/ant_encryption
@@ -225,3 +226,10 @@
 ../../nRF5_SDK_12.3.0/external/freertos/source/include
 ../../nRF5_SDK_12.3.0/external/freertos/portable/IAR/nrf52
 ../../
+../../nRF5_SDK_12.3.0/examples/peripheral/rtc
+../../nRF5_SDK_12.3.0/examples/peripheral/rtc/pca10028/blank/armgcc
+../../nRF5_SDK_12.3.0/examples/peripheral/rtc/pca10028/blank/config
+../../nRF5_SDK_12.3.0/examples/peripheral/ppi
+../../nRF5_SDK_12.3.0/examples/peripheral/ppi/pca10028/blank/config
+../../nRF5_SDK_12.3.0/examples/peripheral/ppi/pca10028/blank/armgcc
+config
