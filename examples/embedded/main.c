@@ -37,7 +37,6 @@
 #include "ble_conn_params.h"
 #include "boards.h"
 #include "softdevice_handler.h"
-#include "app_timer.h"
 #include "st_service.h"
 
 #define CENTRAL_LINK_COUNT               0                                          /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
@@ -308,6 +307,7 @@ static void advertising_init(void)
 
 int main(void)
 {   
+    // TODO: Remove app_timer dependency
     uint32_t err_code;
 
     // Initialize.
