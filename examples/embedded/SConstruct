@@ -33,6 +33,8 @@ envGlobal.Append(LIBPATH=envGlobal['LIBINSTALLPATH'])
 
 envGlobal.RemoveFromList('CCFLAGS_other', ['-fshort-wchar', '-finline-limit=10000'])
 
+envGlobal.Append(CPPPATH=[os.path.abspath('./config')])
+envGlobal['LD_FILE'] = os.path.join(os.path.abspath('./config'), 'summertime_gcc_nrf51.ld')
 envGlobal.SConscript(os.path.join(rootpath, 'SConscript.sdk'), exports='envGlobal')
 env = envGlobal.Clone()
 
