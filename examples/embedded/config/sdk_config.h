@@ -7,6 +7,10 @@
 #include "app_config.h"
 #endif
 
+// Disable app_timer as timer1 and timer2 will be
+// managed manually using nrf_drv_timer api
+#define APP_TIMER_ENABLED 0
+
 // </h>
 //==========================================================
 
@@ -1618,7 +1622,7 @@
  
 
 #ifndef RTC2_ENABLED
-#define RTC2_ENABLED 1
+#define RTC2_ENABLED 0
 #endif
 
 // <o> NRF_MAXIMUM_LATENCY_US - Maximum possible time[us] in highest priority interrupt 

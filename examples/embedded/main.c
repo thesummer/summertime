@@ -34,7 +34,6 @@
 #include "ble_srv_common.h"
 #include "ble_advdata.h"
 #include "ble_advertising.h"
-#include "ble_conn_params.h"
 #include "boards.h"
 #include "softdevice_handler.h"
 #include "st_service.h"
@@ -101,57 +100,6 @@ static void gap_params_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
-/**@brief Function for handling the Connection Parameters Module.
- *
- * @details This function will be called for all events in the Connection Parameters Module which
- *          are passed to the application.
- *          @note All this function does is to disconnect. This could have been done by simply
- *                setting the disconnect_on_fail config parameter, but instead we use the event
- *                handler mechanism to demonstrate its use.
- *
- * @param[in] p_evt  Event received from the Connection Parameters Module.
- */
-static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
-{
-    uint32_t err_code;
-
-    if (p_evt->evt_type == BLE_CONN_PARAMS_EVT_FAILED)
-    {
-        err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_CONN_INTERVAL_UNACCEPTABLE);
-        APP_ERROR_CHECK(err_code);
-    }
-}
-
-
-/**@brief Function for handling a Connection Parameters error.
- *
- * @param[in] nrf_error  Error code containing information about what went wrong.
- */
-static void conn_params_error_handler(uint32_t nrf_error)
-{
-    APP_ERROR_HANDLER(nrf_error);
-}
-
-
-/**@brief Function for initializing the Connection Parameters module.
- */
-static void conn_params_init(void)
-{
-    uint32_t               err_code;
-    ble_conn_params_init_t cp_init;
-
-    memset(&cp_init, 0, sizeof(cp_init));
-
-    cp_init.p_conn_params                  = NULL;
-    cp_init.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
-    cp_init.disconnect_on_fail             = false;
-    cp_init.evt_handler                    = on_conn_params_evt;
-    cp_init.error_handler                  = conn_params_error_handler;
-
-    err_code = ble_conn_params_init(&cp_init);
-    APP_ERROR_CHECK(err_code);
-}
-
 /**@brief Function for putting the chip into sleep mode.
  *
  * @note This function will not return.
@@ -184,6 +132,20 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
     }
 }
 
+static bool check_conn_param(ble_gap_conn_params_t* p_params)
+{
+    if (p_params->max_conn_interval >= MAX_CONN_INTERVAL
+        || p_params->min_conn_interval <= MIN_CONN_INTERVAL)
+//            || params->conn_sup_timeout <= CONN_SUP_TIMEOUT)
+    {
+        // If params not ok, write the values we would like to have
+        p_params->min_conn_interval = MIN_CONN_INTERVAL;
+        p_params->max_conn_interval = MAX_CONN_INTERVAL;
+        p_params->slave_latency     = 0;
+        p_params->conn_sup_timeout  = CONN_SUP_TIMEOUT;
+    }
+
+}
 
 /**@brief Function for handling the Application's BLE Stack events.
  *
@@ -194,20 +156,36 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     uint32_t err_code;
 
     switch (p_ble_evt->header.evt_id)
-            {
-        case BLE_GAP_EVT_CONNECTED:
-            m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-            break;
-
-        case BLE_GAP_EVT_DISCONNECTED:
+    {
+    case BLE_GAP_EVT_DISCONNECTED:
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
             break;
 
+    case BLE_GAP_EVT_CONNECTED:
+    {
+        m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+        // Check if the connection parameters are acceptable
+        ble_gap_conn_params_t* p_params = &p_ble_evt->evt.gap_evt.params.connected.conn_params;
+        if (check_conn_param(p_params))
+        {
+            APP_ERROR_CHECK(sd_ble_gap_conn_param_update(m_conn_handle, p_params));
+        }
+        break;
+    }
+    case BLE_GAP_EVT_CONN_PARAM_UPDATE:
+    {
+        ble_gap_conn_params_t* p_params = &p_ble_evt->evt.gap_evt.params.conn_param_update.conn_params;
+        if (!check_conn_param(p_params))
+        {
+            APP_ERROR_CHECK(sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_CONN_INTERVAL_UNACCEPTABLE));
+        }
+        break;
+    }
         default:
             // No implementation needed.
             break;
+        }
     }
-}
 
 
 /**@brief Function for dispatching a BLE stack event to all modules with a BLE stack event handler.
@@ -219,7 +197,6 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
  */
 static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 {
-    ble_conn_params_on_ble_evt(p_ble_evt);
     on_ble_evt(p_ble_evt);
     ble_advertising_on_ble_evt(p_ble_evt);
     ble_st_service_on_ble_evt(p_ble_evt);
@@ -299,7 +276,7 @@ static void advertising_init(void)
     options.ble_adv_fast_interval = APP_ADV_INTERVAL;
     options.ble_adv_fast_timeout  = APP_ADV_TIMEOUT_IN_SECONDS;
 
-    // OUR_JOB: Create a scan response packet and include the list of UUIDs 
+    // Create a scan response packet and include the list of UUIDs
 
     err_code = ble_advertising_init(&advdata, NULL, &options, on_adv_evt, NULL);
     APP_ERROR_CHECK(err_code);
@@ -315,7 +292,6 @@ int main(void)
     gap_params_init();
     st_service_init();
     advertising_init();
-    conn_params_init();
 
     // Start execution.
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
