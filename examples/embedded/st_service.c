@@ -6,6 +6,8 @@
 #include "ble_srv_common.h"
 #include "app_error.h"
 
+#include "time_measurement.h"
+
 // This structure contains various status information for our service.
 // The name is based on the naming convention used in Nordics SDKs.
 // 'ble' indicates that it is a Bluetooth Low Energy relevant structure and
@@ -149,6 +151,8 @@ static uint32_t st_char_add(uint16_t uuid, ble_gatts_char_handles_t* char_handle
  */
 void st_service_init()
 {
+    time_measurement_init();
+
     uint32_t   err_code; // Variable to hold return codes from library and softdevice functions
 
     // Declare 16-bit service and 128-bit base UUIDs and add them to the BLE stack
