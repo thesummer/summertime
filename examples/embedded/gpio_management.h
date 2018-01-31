@@ -3,16 +3,26 @@
 
 // TODO: Change to correct pin
 #define PIN_PENDULUM 5
+#define PIN_WAKE_UP  6
 
-typedef void (*gpio_mgt_pendulum_handler_t)();
-
-void
-gpio_mgmt_init(gpio_mgt_pendulum_handler_t pendulum_evt_handler);
+typedef void (*gpio_mgt_evt_handler_t)();
 
 void
-gpio_mgmt_start_sensing_pendulum();
+gpio_mgmt_pendulum_init(gpio_mgt_evt_handler_t pendulum_evt_handler);
 
 void
-gpio_mgmt_stop_sensing_pendulum();
+gpio_mgmt_pendulum_start_sensing();
+
+void
+gpio_mgmt_pendulum_stop_sensing();
+
+void
+gpio_mgmt_wakeup_init(gpio_mgt_evt_handler_t wake_up_evt_handler);
+
+void
+gpio_mgmt_wakeup_start_sensing();
+
+void
+gpio_mgmt_wakeup_stop_sensing();
 
 #endif // GPIO_MANAGEMENT_H

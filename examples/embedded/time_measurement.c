@@ -103,7 +103,7 @@ time_measurement_init()
     APP_ERROR_CHECK(nrf_drv_ppi_channel_enable(ppi_channel));
 
     // Setup GPIOs
-    gpio_mgmt_init(timer1_pendulum_int_handler);
+    gpio_mgmt_pendulum_init(timer1_pendulum_int_handler);
 
     // Connect Port event to capture1 task of timer1
     // Will later tell at which time the pendulum passed
@@ -122,14 +122,14 @@ time_measurement_start()
     // Start all timers
     nrf_drv_rtc_enable(&rtc1);
     nrf_drv_timer_enable(&timer1);
-    gpio_mgmt_start_sensing_pendulum();
+    gpio_mgmt_pendulum_start_sensing();
 }
 
 void
 time_measurement_stop()
 {
     // Stop all timers
-    gpio_mgmt_stop_sensing_pendulum();
+    gpio_mgmt_pendulum_stop_sensing();
     nrf_drv_rtc_disable(&rtc1);
     nrf_drv_timer_disable(&timer1);
 }
