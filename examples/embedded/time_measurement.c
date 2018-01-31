@@ -1,7 +1,10 @@
 
 #include "time_measurement.h"
+#include "gpio_management.h"
+
 #include "nrf_drv_rtc.h"
 #include "nrf_drv_timer.h"
+#include "nrf_drv_gpiote.h"
 #include "nrf_drv_ppi.h"
 #include "st_service.h"
 
@@ -50,6 +53,15 @@ timer1_int_handler(nrf_timer_event_t event_type,
     }
 }
 
+static void
+timer1_pendulum_int_handler()
+{
+    m_minute_rate.rate_count++;
+    m_live_measurement.counter = m_current_second * TICKS_PER_SECOND
+                                 + nrf_drv_timer_capture_get(&timer1, NRF_TIMER_CC_CHANNEL1);
+    st_live_measurement_update(&m_live_measurement);
+}
+
 void
 time_measurement_init()
 {
@@ -91,9 +103,14 @@ time_measurement_init()
     APP_ERROR_CHECK(nrf_drv_ppi_channel_enable(ppi_channel));
 
     // Setup GPIOs
-    // TODO: Enable GPIO port event on input change (make sure to only have one event per pendulum crossing)
-    // TODO: Connect timer1 to capture1 on task to port event
-    // TODO: Use GPIO-event interrupt handler to update live measurement characteristic
+    gpio_mgmt_init(timer1_pendulum_int_handler);
+
+    // Connect Port event to capture1 task of timer1
+    // Will later tell at which time the pendulum passed
+    APP_ERROR_CHECK(nrf_drv_ppi_channel_alloc(&ppi_channel));
+    err_code = nrf_drv_ppi_channel_assign(ppi_channel,
+                                          nrf_drv_gpiote_in_event_addr_get(PIN_PENDULUM),
+                                          nrf_drv_timer_task_address_get(&timer1, NRF_TIMER_TASK_CAPTURE1));
 }
 
 void
@@ -105,13 +122,14 @@ time_measurement_start()
     // Start all timers
     nrf_drv_rtc_enable(&rtc1);
     nrf_drv_timer_enable(&timer1);
-    // TODO: Enable GPIO?
+    gpio_mgmt_start_sensing_pendulum();
 }
 
 void
 time_measurement_stop()
 {
     // Stop all timers
+    gpio_mgmt_stop_sensing_pendulum();
     nrf_drv_rtc_disable(&rtc1);
     nrf_drv_timer_disable(&timer1);
 }

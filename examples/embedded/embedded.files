@@ -6,6 +6,8 @@
 ../../nRF5_SDK_12.3.0/examples/peripheral/rtc/pca10028/blank/config/sdk_config.h
 ../../nRF5_SDK_12.3.0/examples/peripheral/rtc/rtc.eww
 config/sdk_config.h
+gpio_management.c
+gpio_management.h
 time_measurement.c
 time_measurement.h
 ../../SConscript.sdk
