@@ -7,7 +7,6 @@
 
 static const nrf_drv_rtc_t rtc1 = NRF_DRV_RTC_INSTANCE(1);
 static const nrf_drv_timer_t timer1 = NRF_DRV_TIMER_INSTANCE(1);
-static const nrf_drv_timer_t timer2 = NRF_DRV_TIMER_INSTANCE(2);
 
 #define TICKS_PER_SECOND RTC_DEFAULT_CONFIG_FREQUENCY
 #define TICKS_PER_MINUTE (TICKS_PER_SECOND*60)
@@ -15,6 +14,8 @@ static const nrf_drv_timer_t timer2 = NRF_DRV_TIMER_INSTANCE(2);
 // Internal variables representing the measurement values
 static minute_rate_t m_minute_rate = {};
 static live_measurement_t m_live_measurement = {};
+// Current second count of timer1
+static uint16_t m_current_second = 0;
 
 // PPI channel which connects RTC1's compare1 event to RTC1 clear task
 nrf_ppi_channel_t m_ppi_ch_cmp1_clear;
@@ -34,6 +35,21 @@ rtc1_int_handler(nrf_drv_rtc_int_type_t int_type)
         m_minute_rate.rate_count = 0;
 }
 
+/**
+ * Timer1 hits the compare event every seconds
+ * count the secounds of the current minute
+ */
+static void
+timer1_int_handler(nrf_timer_event_t event_type,
+                   void* p_context)
+{
+    m_current_second++;
+    if (m_current_second == 60)
+    {
+        m_current_second = 0;
+    }
+}
+
 void
 time_measurement_init()
 {
@@ -46,14 +62,12 @@ time_measurement_init()
 
     nrf_drv_timer_config_t timer_config = NRF_DRV_TIMER_DEFAULT_CONFIG;
     timer_config.mode = NRF_TIMER_MODE_COUNTER;
-    err_code = nrf_drv_timer_init(&timer1, &timer_config, NULL);
-    APP_ERROR_CHECK(err_code);
-    err_code = nrf_drv_timer_init(&timer2, &timer_config, NULL);
+    err_code = nrf_drv_timer_init(&timer1, &timer_config, timer1_int_handler);
     APP_ERROR_CHECK(err_code);
 
     APP_ERROR_CHECK(nrf_drv_ppi_init());
 
-    // Enable tick events to trigger timer1 later, but withou irq
+    // Enable tick events to trigger timer1 later; don't fire IRQ on RTC tick
     nrf_drv_rtc_tick_enable(&rtc1, false);
     // Connect tick events to timer1 count task
     nrf_ppi_channel_t ppi_channel;
@@ -63,20 +77,9 @@ time_measurement_init()
                                           nrf_drv_timer_task_address_get(&timer1, NRF_TIMER_TASK_COUNT));
     APP_ERROR_CHECK(nrf_drv_ppi_channel_enable(ppi_channel));
 
-    // Clear timer1 every 1s, i.e. compare to TICKS_PER_SECOND and clear
+    // Clear timer1 every 1s, i.e. compare to TICKS_PER_SECOND and clear; Use interrupt to count seconds
      nrf_drv_timer_extended_compare(&timer1, 0, TICKS_PER_SECOND,
-                                   NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, false);
-
-    // Call timer2 count on every timer1 compare0 event (i.e. count the seconds)
-    APP_ERROR_CHECK(nrf_drv_ppi_channel_alloc(&ppi_channel));
-    err_code = nrf_drv_ppi_channel_assign(ppi_channel,
-                                          nrf_drv_timer_event_address_get(&timer1, NRF_TIMER_EVENT_COMPARE0),
-                                          nrf_drv_timer_task_address_get(&timer2, NRF_TIMER_TASK_COUNT));
-    APP_ERROR_CHECK(nrf_drv_ppi_channel_enable(ppi_channel));
-
-    // Clear timer2 every 60 s
-    nrf_drv_timer_extended_compare(&timer2, 0, 60,
-                                   NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, false);
+                                   NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
 
     // Clear RTC every minute, i.e. compare to TICKS_PER_MINUTE and clear
     err_code = nrf_drv_rtc_cc_set(&rtc1, 0, TICKS_PER_MINUTE, true);
@@ -99,11 +102,9 @@ time_measurement_start()
     // Make sure everything is in start condition
     nrf_drv_rtc_counter_clear(&rtc1);
     nrf_drv_timer_clear(&timer1);
-    nrf_drv_timer_clear(&timer2);
     // Start all timers
     nrf_drv_rtc_enable(&rtc1);
     nrf_drv_timer_enable(&timer1);
-    nrf_drv_timer_enable(&timer2);
     // TODO: Enable GPIO?
 }
 
@@ -113,5 +114,4 @@ time_measurement_stop()
     // Stop all timers
     nrf_drv_rtc_disable(&rtc1);
     nrf_drv_timer_disable(&timer1);
-    nrf_drv_timer_disable(&timer2);
 }
