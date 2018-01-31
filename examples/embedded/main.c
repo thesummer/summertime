@@ -37,6 +37,7 @@
 #include "boards.h"
 #include "softdevice_handler.h"
 #include "st_service.h"
+#include "gpio_management.h"
 
 #define CENTRAL_LINK_COUNT               0                                          /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT            1                                          /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
@@ -69,6 +70,13 @@ static uint16_t                          m_conn_handle = BLE_CONN_HANDLE_INVALID
 void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
     app_error_handler(DEAD_BEEF, line_num, p_file_name);
+}
+
+static void on_wake_up_event()
+{
+    // Try to advertise again
+    APP_ERROR_CHECK(ble_advertising_start(BLE_ADV_MODE_FAST));
+    gpio_mgmt_wakeup_stop_sensing();
 }
 
 /**@brief Function for the GAP initialization.
@@ -106,6 +114,8 @@ static void gap_params_init(void)
  */
 static void sleep_mode_enter(void)
 {
+    // Activate the wake up pin
+    gpio_mgmt_wakeup_start_sensing();
     // Go to system-off mode (this function will not return; wakeup will cause a reset).
     uint32_t err_code = sd_power_system_off();
     APP_ERROR_CHECK(err_code);
@@ -284,7 +294,6 @@ static void advertising_init(void)
 
 int main(void)
 {   
-    // TODO: Remove app_timer dependency
     uint32_t err_code;
 
     // Initialize.
@@ -292,6 +301,7 @@ int main(void)
     gap_params_init();
     st_service_init();
     advertising_init();
+    gpio_mgmt_wakeup_init(on_wake_up_event);
 
     // Start execution.
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
