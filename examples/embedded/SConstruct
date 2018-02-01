@@ -13,8 +13,8 @@ envGlobal = Environment(toolpath=[os.path.join(rootpath, 'scons-build-tools/site
                         OS='freertos',
                         DEVICE_SIZE={
                           'name' : 'NRF51822',
-                          'flash': 128*1024,
-                          'ram'  :  16*1024
+                          'flash': (256-108)*1024,   # Reserve 108kiB for the softdevice
+                          'ram'  :  (16-10)*1024     # Reserve 10 kiB for the softdevice check later how much is needed (update linker script too)
                         },
                         BASEPATH=os.path.abspath('.'),
                         ENV=os.environ)

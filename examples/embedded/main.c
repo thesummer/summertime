@@ -255,7 +255,9 @@ static void ble_stack_init(void)
     CHECK_RAM_START_ADDR(CENTRAL_LINK_COUNT,PERIPHERAL_LINK_COUNT);
     
     // Enable BLE stack.
-    err_code = softdevice_enable(&ble_enable_params);
+    uint32_t app_ram_base;
+    err_code = sd_ble_enable(&ble_enable_params, &app_ram_base);
+    // TODO: Check actual RAM-usage
     APP_ERROR_CHECK(err_code);
 
     // Register with the SoftDevice handler module for BLE events.

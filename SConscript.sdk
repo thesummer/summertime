@@ -121,7 +121,7 @@ envGlobal.Append(LIBPATH=[sdkpath + '/components/toolchain/gcc'])
 
 envGlobal.AppendUnique(CPPDEFINES=[('__STACK_SIZE', '2048'), 
                              'NRF51',
-                             ('__HEAP_SIZE', '1024'),
+                             ('__HEAP_SIZE', '0'),
                              'BOARD_PCA10028',
                              'NRF51822',
                              'BLE_STACK_SUPPORT_REQD',

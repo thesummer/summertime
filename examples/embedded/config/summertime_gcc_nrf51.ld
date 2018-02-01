@@ -3,10 +3,15 @@
 SEARCH_DIR(.)
 GROUP(-lgcc -lc -lnosys)
 
+  /*
+   * 256kB flash
+   * S130 version 8.0.0 takes 108kB (0x1B000 bytes) of flash, rest for app.
+   */
+
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x1b000, LENGTH = 0x25000
-  RAM (rwx) :  ORIGIN = 0x200033b0, LENGTH = 0x4c50
+  FLASH (rx) : ORIGIN = 0x0 + 108K, LENGTH = 256K - 108K
+  RAM (rwx) :  ORIGIN = 0x20000000 + 10K, LENGTH = 16K - 10K
 }
 
 SECTIONS
