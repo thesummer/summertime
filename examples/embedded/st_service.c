@@ -5,8 +5,10 @@
 #include "st_service.h"
 #include "ble_srv_common.h"
 #include "app_error.h"
+#include "ble_advertising.h"
 
 #include "time_measurement.h"
+#include "gpio_management.h"
 
 // This structure contains various status information for our service.
 // The name is based on the naming convention used in Nordics SDKs.
@@ -55,15 +57,32 @@ static void on_ble_write(ble_evt_t* p_ble_evt)
     // Print handle and value
     if(data_buffer == 0x0001)
     {
-        printf("Notification enabled\r\n");
-        // TODO: Start measurement
+        gpio_mgmt_set_status(LED_STATUS_START_MEASUREMENT);
     }
     else if(data_buffer == 0x0000)
     {
-        printf("Notification disabled\r\n");
-        // TODO: Stop measurement
+        time_measurement_stop();
+        gpio_mgmt_set_status(LED_STATUS_STOP_MEASUREMENT);
     }
 }
+
+static void
+on_status_event(led_status_t status)
+{
+    if (status == LED_STATUS_START_MEASUREMENT)
+    {
+        time_measurement_start();
+    }
+}
+
+static void
+on_wake_up_event()
+{
+    // Try to advertise again
+    APP_ERROR_CHECK(ble_advertising_start(BLE_ADV_MODE_FAST));
+    gpio_mgmt_wakeup_stop_sensing();
+}
+
 
 void ble_st_service_on_ble_evt(ble_evt_t* p_ble_evt)
 {
@@ -152,7 +171,8 @@ static uint32_t st_char_add(uint16_t uuid, ble_gatts_char_handles_t* char_handle
 void st_service_init()
 {
     time_measurement_init();
-
+    gpio_mgmt_wakeup_init(on_wake_up_event);
+    gpio_mgmt_status_init(on_status_event);
     uint32_t   err_code; // Variable to hold return codes from library and softdevice functions
 
     // Declare 16-bit service and 128-bit base UUIDs and add them to the BLE stack
@@ -188,6 +208,7 @@ void st_service_init()
 // Function to be called when updating characteristic value
 void st_live_measurement_update(live_measurement_t* measurement)
 {
+    gpio_mgmt_set_status(LED_STATUS_ACTIVE_MEASUREMENT);
     // Update characteristic value
     if (m_handle.conn_handle != BLE_CONN_HANDLE_INVALID)
     {

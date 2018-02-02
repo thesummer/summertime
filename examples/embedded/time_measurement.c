@@ -54,7 +54,7 @@ timer1_int_handler(nrf_timer_event_t event_type,
 }
 
 static void
-timer1_pendulum_int_handler()
+pendulum_int_handler()
 {
     m_minute_rate.rate_count++;
     m_live_measurement.counter = m_current_second * TICKS_PER_SECOND
@@ -81,12 +81,19 @@ time_measurement_init()
 
     // Enable tick events to trigger timer1 later; don't fire IRQ on RTC tick
     nrf_drv_rtc_tick_enable(&rtc1, false);
-    // Connect tick events to timer1 count task
+    // Connect tick events to timer1/2 count task
     nrf_ppi_channel_t ppi_channel;
     APP_ERROR_CHECK(nrf_drv_ppi_channel_alloc(&ppi_channel));
     err_code = nrf_drv_ppi_channel_assign(ppi_channel,
                                           nrf_drv_rtc_event_address_get(&rtc1, NRF_RTC_EVENT_TICK),
                                           nrf_drv_timer_task_address_get(&timer1, NRF_TIMER_TASK_COUNT));
+    APP_ERROR_CHECK(nrf_drv_ppi_channel_enable(ppi_channel));
+    APP_ERROR_CHECK(nrf_drv_ppi_channel_alloc(&ppi_channel));
+
+    nrf_drv_timer_t timer2 = NRF_DRV_TIMER_INSTANCE(2);
+    err_code = nrf_drv_ppi_channel_assign(ppi_channel,
+                                          nrf_drv_rtc_event_address_get(&rtc1, NRF_RTC_EVENT_TICK),
+                                          nrf_drv_timer_task_address_get(&timer2, NRF_TIMER_TASK_COUNT));
     APP_ERROR_CHECK(nrf_drv_ppi_channel_enable(ppi_channel));
 
     // Clear timer1 every 1s, i.e. compare to TICKS_PER_SECOND and clear; Use interrupt to count seconds
@@ -103,7 +110,7 @@ time_measurement_init()
     APP_ERROR_CHECK(nrf_drv_ppi_channel_enable(ppi_channel));
 
     // Setup GPIOs
-    gpio_mgmt_pendulum_init(timer1_pendulum_int_handler);
+    gpio_mgmt_pendulum_init(pendulum_int_handler);
 
     // Connect Port event to capture1 task of timer1
     // Will later tell at which time the pendulum passed
@@ -117,6 +124,8 @@ void
 time_measurement_start()
 {
     // Make sure everything is in start condition
+    nrf_drv_rtc_disable(&rtc1);
+    nrf_drv_timer_disable(&timer1);
     nrf_drv_rtc_counter_clear(&rtc1);
     nrf_drv_timer_clear(&timer1);
     // Start all timers
@@ -130,6 +139,15 @@ time_measurement_stop()
 {
     // Stop all timers
     gpio_mgmt_pendulum_stop_sensing();
-    nrf_drv_rtc_disable(&rtc1);
     nrf_drv_timer_disable(&timer1);
+}
+
+void time_measurement_rtc_start()
+{
+    nrf_drv_rtc_enable(&rtc1);
+}
+
+void time_measurement_rtc_stop()
+{
+    nrf_drv_rtc_disable(&rtc1);
 }

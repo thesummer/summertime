@@ -56,4 +56,9 @@ time_measurement_start();
 void
 time_measurement_stop();
 
+void
+time_measurement_rtc_start();
+
+void
+time_measurement_rtc_stop();
 #endif // TIME_MEASUREMENT_H

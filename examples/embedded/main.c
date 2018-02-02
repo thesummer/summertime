@@ -72,13 +72,6 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
     app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
-static void on_wake_up_event()
-{
-    // Try to advertise again
-    APP_ERROR_CHECK(ble_advertising_start(BLE_ADV_MODE_FAST));
-    gpio_mgmt_wakeup_stop_sensing();
-}
-
 /**@brief Function for the GAP initialization.
  *
  * @details This function sets up all the necessary GAP (Generic Access Profile) parameters of the
@@ -135,6 +128,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
     switch (ble_adv_evt)
     {
         case BLE_ADV_EVT_IDLE:
+            gpio_mgmt_set_status(LED_STATUS_IDLE);
             sleep_mode_enter();
             break;
         default:
@@ -303,11 +297,12 @@ int main(void)
     gap_params_init();
     st_service_init();
     advertising_init();
-    gpio_mgmt_wakeup_init(on_wake_up_event);
+    gpio_mgmt_set_status(LED_STATUS_POWER_UP);
 
     // Start execution.
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
+    gpio_mgmt_set_status(LED_STATUS_ADVERTISING);
 
     // Enter main loop.
     while(1)
