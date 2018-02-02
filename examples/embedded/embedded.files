@@ -8,6 +8,8 @@
 config/sdk_config.h
 gpio_management.c
 gpio_management.h
+status_led_mgmt.c
+status_led_mgmt.h
 time_measurement.c
 time_measurement.h
 ../../SConscript.sdk

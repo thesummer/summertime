@@ -9,6 +9,7 @@
 
 #include "time_measurement.h"
 #include "gpio_management.h"
+#include "status_led_mgmt.h"
 
 // This structure contains various status information for our service.
 // The name is based on the naming convention used in Nordics SDKs.
@@ -57,12 +58,12 @@ static void on_ble_write(ble_evt_t* p_ble_evt)
     // Print handle and value
     if(data_buffer == 0x0001)
     {
-        gpio_mgmt_set_status(LED_STATUS_START_MEASUREMENT);
+        status_led_mgmt_set_status(LED_STATUS_START_MEASUREMENT);
     }
     else if(data_buffer == 0x0000)
     {
         time_measurement_stop();
-        gpio_mgmt_set_status(LED_STATUS_STOP_MEASUREMENT);
+        status_led_mgmt_set_status(LED_STATUS_STOP_MEASUREMENT);
     }
 }
 
@@ -172,7 +173,7 @@ void st_service_init()
 {
     time_measurement_init();
     gpio_mgmt_wakeup_init(on_wake_up_event);
-    gpio_mgmt_status_init(on_status_event);
+    status_led_mgmt_init(on_status_event);
     uint32_t   err_code; // Variable to hold return codes from library and softdevice functions
 
     // Declare 16-bit service and 128-bit base UUIDs and add them to the BLE stack
@@ -208,7 +209,7 @@ void st_service_init()
 // Function to be called when updating characteristic value
 void st_live_measurement_update(live_measurement_t* measurement)
 {
-    gpio_mgmt_set_status(LED_STATUS_ACTIVE_MEASUREMENT);
+    status_led_mgmt_set_status(LED_STATUS_ACTIVE_MEASUREMENT);
     // Update characteristic value
     if (m_handle.conn_handle != BLE_CONN_HANDLE_INVALID)
     {

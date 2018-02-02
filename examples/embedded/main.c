@@ -38,6 +38,7 @@
 #include "softdevice_handler.h"
 #include "st_service.h"
 #include "gpio_management.h"
+#include "status_led_mgmt.h"
 
 #define CENTRAL_LINK_COUNT               0                                          /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT            1                                          /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
@@ -128,7 +129,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
     switch (ble_adv_evt)
     {
         case BLE_ADV_EVT_IDLE:
-            gpio_mgmt_set_status(LED_STATUS_IDLE);
+            status_led_mgmt_set_status(LED_STATUS_IDLE);
             sleep_mode_enter();
             break;
         default:
@@ -297,12 +298,12 @@ int main(void)
     gap_params_init();
     st_service_init();
     advertising_init();
-    gpio_mgmt_set_status(LED_STATUS_POWER_UP);
+    status_led_mgmt_set_status(LED_STATUS_POWER_UP);
 
     // Start execution.
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
-    gpio_mgmt_set_status(LED_STATUS_ADVERTISING);
+    status_led_mgmt_set_status(LED_STATUS_ADVERTISING);
 
     // Enter main loop.
     while(1)
