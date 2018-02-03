@@ -5,7 +5,7 @@ import os
 
 programName = 'summertime'
 
-rootpath = '../../'
+rootpath = '../'
 
 envGlobal = Environment(toolpath=[os.path.join(rootpath, 'scons-build-tools/site_tools')],
                         buildroot=[rootpath + 'build/'],
