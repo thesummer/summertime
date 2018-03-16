@@ -80,8 +80,9 @@ static void
 on_wake_up_event()
 {
     // Try to advertise again
-    APP_ERROR_CHECK(ble_advertising_start(BLE_ADV_MODE_FAST));
     gpio_mgmt_wakeup_stop_sensing();
+    APP_ERROR_CHECK(ble_advertising_start(BLE_ADV_MODE_FAST));
+    status_led_mgmt_set_status(LED_STATUS_ADVERTISING);
 }
 
 
@@ -115,7 +116,7 @@ static uint32_t st_char_add(uint16_t uuid, ble_gatts_char_handles_t* char_handle
 {
     uint32_t   err_code = 0; // Variable to hold return codes from library and softdevice functions
     
-    // OUR_JOB: Step 2.A, Add a custom characteristic UUID
+    // Add a custom characteristic UUID
     ble_uuid_t          char_uuid;
     ble_uuid128_t       base_uuid = BLE_UUID_OUR_BASE_UUID;
     char_uuid.uuid      = uuid;
@@ -196,12 +197,14 @@ void st_service_init()
     // Add 6 byte characteristic for live measurement
     // 2 bytes for current minute, 4 bytes for current counter value
     // Characteristic value initialized to 0
-    st_char_add(BLE_UUID_LIVE_MEASUREMENT, &m_handle.char_live_handles, buffer, sizeof(buffer));
+    err_code = st_char_add(BLE_UUID_LIVE_MEASUREMENT, &m_handle.char_live_handles, buffer, sizeof(buffer));
+    APP_ERROR_CHECK(err_code);
 
     // Add 4 byte characteristic for rate count per minute
     // 2 byte current minute, 2 bytes tick count of last minute
     // Characteristic initialized to 0
-    st_char_add(BLE_UUID_MINUTE_RATE, &m_handle.char_rate_handles, buffer, 4);
+    err_code = st_char_add(BLE_UUID_MINUTE_RATE, &m_handle.char_rate_handles, buffer, 4);
+    APP_ERROR_CHECK(err_code);
 
     // TODO: For later stages add characteristic for loading values from memory
 }
