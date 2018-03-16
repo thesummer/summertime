@@ -10,19 +10,20 @@ rootpath = '../'
 envGlobal = Environment(toolpath=[os.path.join(rootpath, 'scons-build-tools/site_tools')],
                         buildroot=[rootpath + 'build/'],
                         tools=['utils_buildformat', 'utils_buildsize'],
-                        OS='freertos',
+                        OS='none',
                         DEVICE_SIZE={
                           'name' : 'NRF51822',
                           'flash': (256-108)*1024,   # Reserve 108kiB for the softdevice
                           'ram'  :  (16-10)*1024     # Reserve 10 kiB for the softdevice check later how much is needed (update linker script too)
                         },
+                        CPU="cortex-m0",
                         BASEPATH=os.path.abspath('.'),
                         ENV=os.environ)
 #Help(vars.GenerateHelpText(envGlobal))
 
 envGlobal.Tool('compiler_arm_none_eabi_gcc')
 envGlobal.AppendUnique(CCFLAGS_optimize=['-fno-strict-aliasing', '-fno-builtin', '--short-enums', '-O3', '-g3'])
-envGlobal.AppendUnique(CCFLAGS_target=['-mcpu=cortex-m0', '-mfloat-abi=soft', '-mthumb', '-mabi=aapcs'])
+envGlobal.AppendUnique(CCFLAGS_target=['-mfloat-abi=soft', '-mthumb', '-mabi=aapcs'])
 envGlobal.Append(LINK_FLAGS_other=['--specs=nano.specs', '-lc', '-lnosys'])
 
 buildfolder = os.path.join(rootpath, 'build')
@@ -35,6 +36,7 @@ envGlobal.RemoveFromList('CCFLAGS_other', ['-fshort-wchar', '-finline-limit=1000
 
 envGlobal.Append(CPPPATH=[os.path.abspath('./config')])
 envGlobal['LD_FILE'] = os.path.join(os.path.abspath('./config'), 'summertime_gcc_nrf51.ld')
+envGlobal.AppendUnique(CPPDEFINES='DEBUG_NRF')
 envGlobal.SConscript(os.path.join(rootpath, 'SConscript.sdk'), exports='envGlobal')
 env = envGlobal.Clone()
 
@@ -44,8 +46,10 @@ env.AppendUnique(LIBS=[
 
 files = env.Glob('*.c')
 
-program = env.Program(programName, files)
+programElf = env.Program(programName + '.elf', files)
+programHex = env.Hex(programElf)
 #envGlobal.Size(0)
-envGlobal.Alias('build', program)
-envGlobal.Alias('build', env.Size(program))
+envGlobal.Alias('build', programElf)
+envGlobal.Alias('build', programHex)
+envGlobal.Alias('build', env.Size(programElf))
 envGlobal.Default('build')
