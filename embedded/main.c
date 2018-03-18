@@ -51,7 +51,7 @@
 #define MIN_CONN_INTERVAL                MSEC_TO_UNITS(100, UNIT_1_25_MS)           /**< Minimum acceptable connection interval (0.1 seconds). */
 #define MAX_CONN_INTERVAL                MSEC_TO_UNITS(200, UNIT_1_25_MS)           /**< Maximum acceptable connection interval (0.2 second). */
 #define SLAVE_LATENCY                    0                                          /**< Slave latency. */
-#define CONN_SUP_TIMEOUT                 MSEC_TO_UNITS(5000, UNIT_10_MS)            /**< Connection supervisory timeout (4 seconds). */
+#define CONN_SUP_TIMEOUT                 MSEC_TO_UNITS(5000, UNIT_10_MS)            /**< Connection supervisory timeout (5 seconds). */
 
 #define DEAD_BEEF                        0xDEADBEEF                                 /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
@@ -111,8 +111,9 @@ static void sleep_mode_enter(void)
     // Activate the wake up pin
     gpio_mgmt_wakeup_start_sensing();
     // Go to system-off mode (this function will not return; wakeup will cause a reset).
-    uint32_t err_code = sd_power_system_off();
-    APP_ERROR_CHECK(err_code);
+    // TODO: Useful? Idle blinking not possible then.
+    //    uint32_t err_code = sd_power_system_off();
+    //    APP_ERROR_CHECK(err_code);
 }
 
 
@@ -254,9 +255,9 @@ static void ble_stack_init(void)
     CHECK_RAM_START_ADDR(CENTRAL_LINK_COUNT,PERIPHERAL_LINK_COUNT);
     
     // Enable BLE stack.
-    uint32_t app_ram_base;
+    extern uint32_t __data_start__;
+    uint32_t app_ram_base = (uint32_t)&__data_start__;
     err_code = sd_ble_enable(&ble_enable_params, &app_ram_base);
-    // TODO: Check actual RAM-usage
     APP_ERROR_CHECK(err_code);
 
     // Register with the SoftDevice handler module for BLE events.
