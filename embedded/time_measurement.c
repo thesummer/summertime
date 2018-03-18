@@ -15,8 +15,8 @@ static const nrf_drv_timer_t timer1 = NRF_DRV_TIMER_INSTANCE(1);
 #define TICKS_PER_MINUTE (TICKS_PER_SECOND*60)
 
 // Internal variables representing the measurement values
-static minute_rate_t m_minute_rate = {};
-static live_measurement_t m_live_measurement = {};
+static minute_rate_t m_minute_rate = {0};
+static live_measurement_t m_live_measurement = {0};
 // Current second count of timer1
 static uint16_t m_current_second = 0;
 
@@ -39,7 +39,6 @@ rtc1_int_handler(nrf_drv_rtc_int_type_t int_type)
     m_live_measurement.minute++;
     m_minute_rate.minute++;
     m_minute_rate.rate_count = 0;
-    status_led_mgmt_set_status(LED_STATUS_ACTIVE_MEASUREMENT);
 }
 
 /**
@@ -132,6 +131,13 @@ time_measurement_start()
     nrf_drv_timer_disable(&timer1);
     nrf_drv_rtc_counter_clear(&rtc1);
     nrf_drv_timer_clear(&timer1);
+    // Reset the internal state
+    m_current_second = 0;
+    m_live_measurement.minute  = 0;
+    m_live_measurement.counter = 0;
+    m_minute_rate.minute = 0;
+    m_minute_rate.rate_count = 0;
+
     // Start all timers
     nrf_drv_timer_enable(&timer1);
     nrf_drv_rtc_enable(&rtc1);
