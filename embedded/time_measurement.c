@@ -32,10 +32,14 @@ nrf_ppi_channel_t m_ppi_ch_cmp1_rtc2_start;
 static void
 rtc1_int_handler(nrf_drv_rtc_int_type_t int_type)
 {
-        st_minute_rate_update(&m_minute_rate);
-        m_live_measurement.minute++;
-        m_minute_rate.minute++;
-        m_minute_rate.rate_count = 0;
+    // The driver disabled the event and the interrupt for CC events -> reenable them here
+    nrf_rtc_event_enable(rtc1.p_reg, NRF_RTC_INT_COMPARE0_MASK);
+    nrf_rtc_int_enable(rtc1.p_reg, NRF_RTC_INT_COMPARE0_MASK);
+    st_minute_rate_update(&m_minute_rate);
+    m_live_measurement.minute++;
+    m_minute_rate.minute++;
+    m_minute_rate.rate_count = 0;
+    status_led_mgmt_set_status(LED_STATUS_ACTIVE_MEASUREMENT);
 }
 
 /**
@@ -129,16 +133,17 @@ time_measurement_start()
     nrf_drv_rtc_counter_clear(&rtc1);
     nrf_drv_timer_clear(&timer1);
     // Start all timers
-    nrf_drv_rtc_enable(&rtc1);
     nrf_drv_timer_enable(&timer1);
+    nrf_drv_rtc_enable(&rtc1);
     gpio_mgmt_pendulum_start_sensing();
 }
 
 void
 time_measurement_stop()
 {
-    // Stop all timers
+    // Disable sensing interrupt
     gpio_mgmt_pendulum_stop_sensing();
+    // Stop timer1 to save energy
     nrf_drv_timer_disable(&timer1);
 }
 
