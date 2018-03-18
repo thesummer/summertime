@@ -38,13 +38,13 @@ static ble_os_t m_handle = {};
 static void on_ble_write(ble_evt_t* p_ble_evt)
 {
     // Declare buffer variable to hold received data. The data can only be 32 bit long.
-    uint32_t data_buffer;
+    uint16_t data_buffer = 0xFFFF;
     // Populate ble_gatts_value_t structure to hold received data and metadata.
     ble_gatts_value_t rx_data;
-    rx_data.len = sizeof(uint32_t);
+    rx_data.len = sizeof(data_buffer);
     rx_data.offset = 0;
     rx_data.p_value = (uint8_t*) &data_buffer;
-    
+
     if(p_ble_evt->evt.gatts_evt.params.write.handle == m_handle.char_live_handles.cccd_handle)
     {
         // Get data
@@ -74,6 +74,10 @@ on_status_event(led_status_t status)
     {
         time_measurement_start();
     }
+    else if (status == LED_STATUS_STOP_MEASUREMENT)
+    {
+        status_led_mgmt_set_status(LED_STATUS_CONNECTED);
+    }
 }
 
 static void
@@ -81,10 +85,28 @@ on_wake_up_event()
 {
     // Try to advertise again
     gpio_mgmt_wakeup_stop_sensing();
-    APP_ERROR_CHECK(ble_advertising_start(BLE_ADV_MODE_FAST));
+    uint32_t err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
+    APP_ERROR_CHECK(err_code);
     status_led_mgmt_set_status(LED_STATUS_ADVERTISING);
 }
 
+static void
+serialize32(uint32_t value, uint8_t* buffer)
+{
+    // Serialize MSB
+    buffer[0] = (value >> 24) & 0xFF;
+    buffer[1] = (value >> 16) & 0xFF;
+    buffer[2] = (value >> 8)  & 0xFF;
+    buffer[3] = value & 0xFF;
+}
+
+static void
+serialize16(uint16_t value, uint8_t* buffer)
+{
+    // Serialize MSB
+    buffer[0] = (value >> 8)  & 0xFF;
+    buffer[1] = value & 0xFF;
+}
 
 void ble_st_service_on_ble_evt(ble_evt_t* p_ble_evt)
 {
@@ -216,18 +238,21 @@ void st_live_measurement_update(live_measurement_t* measurement)
     // Update characteristic value
     if (m_handle.conn_handle != BLE_CONN_HANDLE_INVALID)
     {
-        uint16_t               len = sizeof(live_measurement_t);
-        ble_gatts_hvx_params_t hvx_params;
-        memset(&hvx_params, 0, sizeof(hvx_params));
+        uint8_t buffer[6];
+        serialize16(measurement->minute, buffer);
+        serialize32(measurement->counter, buffer+2);
+        uint16_t               len = sizeof(buffer);
+        ble_gatts_hvx_params_t hvx_params = {0};
 
         hvx_params.handle = m_handle.char_live_handles.value_handle;
         hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
         hvx_params.offset = 0;
         hvx_params.p_len  = &len;
-        hvx_params.p_data = (uint8_t*)measurement;
+        hvx_params.p_data = buffer;
 
-        sd_ble_gatts_hvx(m_handle.conn_handle, &hvx_params);
-    }   
+        volatile uint32_t err_code = sd_ble_gatts_hvx(m_handle.conn_handle, &hvx_params);
+        APP_ERROR_CHECK(err_code);
+    }
 } 
 
 void st_minute_rate_update(minute_rate_t *rate)
@@ -235,15 +260,17 @@ void st_minute_rate_update(minute_rate_t *rate)
     // Update characteristic value
     if (m_handle.conn_handle != BLE_CONN_HANDLE_INVALID)
     {
-        uint16_t               len = sizeof(live_measurement_t);
-        ble_gatts_hvx_params_t hvx_params;
-        memset(&hvx_params, 0, sizeof(hvx_params));
+        uint8_t buffer[4];
+        uint16_t len = sizeof(buffer);
+        serialize16(rate->minute, buffer);
+        serialize16(rate->rate_count, buffer+2);
+        ble_gatts_hvx_params_t hvx_params = {0};
 
         hvx_params.handle = m_handle.char_rate_handles.value_handle;
         hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
         hvx_params.offset = 0;
         hvx_params.p_len  = &len;
-        hvx_params.p_data = (uint8_t*)rate;
+        hvx_params.p_data = buffer;
 
         sd_ble_gatts_hvx(m_handle.conn_handle, &hvx_params);
     }

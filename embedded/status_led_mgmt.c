@@ -65,7 +65,6 @@ static void
 timer2_int_handler(nrf_timer_event_t event_type,
                    void* p_context)
 {
-    static volatile int count = 0;
     if (event_type == NRF_TIMER_EVENT_COMPARE0)
     {
         if (m_pin_power_config.next_time < m_pin_power_config.maximum_time_ticks)
@@ -75,7 +74,6 @@ timer2_int_handler(nrf_timer_event_t event_type,
             nrf_timer_cc_write(timer2.p_reg, NRF_TIMER_CC_CHANNEL0,
                                nextTimer/*m_pin_power_config.next_time & MAX_TIMER_VALUE*/);
             nrf_gpio_pin_toggle(PIN_POWER);
-            count++;
         }
         else
         {
@@ -89,7 +87,6 @@ timer2_int_handler(nrf_timer_event_t event_type,
     }
     else
     {
-        count = event_type + 10;
         if (m_pin_reset_config.next_time < m_pin_reset_config.maximum_time_ticks)
         {
             m_pin_reset_config.next_time += m_pin_reset_config.toggle_time_ticks;
@@ -141,6 +138,7 @@ void
 status_led_mgmt_set_status(led_status_t status)
 {
     stop_toggle();
+    m_status = status;
     switch (status)
     {
     case LED_STATUS_POWER_UP: // power led continuous
