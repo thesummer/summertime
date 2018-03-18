@@ -11,6 +11,7 @@ typedef enum
     LED_STATUS_POWER_UP,            // power led continuous
     LED_STATUS_IDLE,                // toggle reset led every 1s
     LED_STATUS_ADVERTISING,         // power led toggle every 100ms
+    LED_STATUS_CONNECTED,           // toggle power led every 1 s
     LED_STATUS_START_MEASUREMENT,   // both leds toggling every 50 ms for 1s
     LED_STATUS_ACTIVE_MEASUREMENT,  // tick both leds alternating on every tick for 50/100ms
     LED_STATUS_STOP_MEASUREMENT,    // both leds on for 1s

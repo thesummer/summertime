@@ -165,6 +165,8 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     {
     case BLE_GAP_EVT_DISCONNECTED:
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
+            // ble_advertising will start advertising again on disconnect event
+            status_led_mgmt_set_status(LED_STATUS_ADVERTISING);
             break;
 
     case BLE_GAP_EVT_CONNECTED:
@@ -176,6 +178,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
         {
             APP_ERROR_CHECK(sd_ble_gap_conn_param_update(m_conn_handle, p_params));
         }
+        status_led_mgmt_set_status(LED_STATUS_CONNECTED);
         break;
     }
     case BLE_GAP_EVT_CONN_PARAM_UPDATE:
@@ -187,11 +190,11 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
         }
         break;
     }
-        default:
-            // No implementation needed.
-            break;
-        }
+    default:
+        // No implementation needed.
+        break;
     }
+}
 
 
 /**@brief Function for dispatching a BLE stack event to all modules with a BLE stack event handler.
