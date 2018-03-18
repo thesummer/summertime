@@ -22,7 +22,8 @@ envGlobal = Environment(toolpath=[os.path.join(rootpath, 'scons-build-tools/site
 #Help(vars.GenerateHelpText(envGlobal))
 
 envGlobal.Tool('compiler_arm_none_eabi_gcc')
-envGlobal.AppendUnique(CCFLAGS_optimize=['-fno-strict-aliasing', '-fno-builtin', '--short-enums', '-O3', '-g3'])
+#envGlobal.AppendUnique(CCFLAGS_optimize=['-fno-strict-aliasing', '-fno-builtin', '--short-enums', '-O3', '-g'])
+envGlobal['CCFLAGS_optimize']=['-fno-strict-aliasing', '-fno-builtin',  '-ffunction-sections','-fdata-sections', '--short-enums', '-O0', '-g']
 envGlobal.AppendUnique(CCFLAGS_target=['-mfloat-abi=soft', '-mthumb', '-mabi=aapcs'])
 envGlobal.Append(LINK_FLAGS_other=['--specs=nano.specs', '-lc', '-lnosys'])
 
