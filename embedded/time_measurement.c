@@ -121,6 +121,8 @@ time_measurement_init()
     err_code = nrf_drv_ppi_channel_assign(ppi_channel,
                                           nrf_drv_gpiote_in_event_addr_get(PIN_PENDULUM),
                                           nrf_drv_timer_task_address_get(&timer1, NRF_TIMER_TASK_CAPTURE1));
+    APP_ERROR_CHECK(err_code);
+    APP_ERROR_CHECK(nrf_drv_ppi_channel_enable(ppi_channel));
 }
 
 void
