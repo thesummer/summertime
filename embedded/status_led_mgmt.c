@@ -156,6 +156,11 @@ status_led_mgmt_set_status(led_status_t status)
         m_pin_power_config.toggle_time_ticks  = MS_TO_TICKS(100);
         start_toggle(PIN_POWER);
         break;
+    case LED_STATUS_CONNECTED:
+        m_pin_power_config.maximum_time_ticks = MAX_TOGGLE_TIME;
+        m_pin_power_config.toggle_time_ticks  = MS_TO_TICKS(1000);
+        start_toggle(PIN_POWER);
+        break;
     case LED_STATUS_START_MEASUREMENT:   // both leds toggling every 50 ms for 1s
         m_pin_power_config.maximum_time_ticks = MS_TO_TICKS(1000);
         m_pin_power_config.toggle_time_ticks  = MS_TO_TICKS(50);
