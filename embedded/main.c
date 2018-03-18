@@ -139,17 +139,18 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 
 static bool check_conn_param(ble_gap_conn_params_t* p_params)
 {
-    if (p_params->max_conn_interval >= MAX_CONN_INTERVAL
-        || p_params->min_conn_interval <= MIN_CONN_INTERVAL)
-//            || params->conn_sup_timeout <= CONN_SUP_TIMEOUT)
+    bool params_valid = true;
+    if (p_params->min_conn_interval >= MAX_CONN_INTERVAL)
     {
         // If params not ok, write the values we would like to have
         p_params->min_conn_interval = MIN_CONN_INTERVAL;
         p_params->max_conn_interval = MAX_CONN_INTERVAL;
         p_params->slave_latency     = 0;
         p_params->conn_sup_timeout  = CONN_SUP_TIMEOUT;
+        params_valid = false;
     }
 
+    return params_valid;
 }
 
 /**@brief Function for handling the Application's BLE Stack events.
