@@ -11,6 +11,9 @@
 #include "gpio_management.h"
 #include "status_led_mgmt.h"
 
+#define NOTIFICATION_ENABLED  0x0001
+#define NOTIFICATION_DISABLED 0x0000
+
 // This structure contains various status information for our service.
 // The name is based on the naming convention used in Nordics SDKs.
 // 'ble' indicates that it is a Bluetooth Low Energy relevant structure and
@@ -49,21 +52,16 @@ static void on_ble_write(ble_evt_t* p_ble_evt)
     {
         // Get data
         sd_ble_gatts_value_get(m_handle.conn_handle, m_handle.char_live_handles.cccd_handle, &rx_data);
-    }
-    else if (p_ble_evt->evt.gatts_evt.params.write.handle == m_handle.char_rate_handles.cccd_handle)
-    {
-        // Get data
-        sd_ble_gatts_value_get(m_handle.conn_handle, m_handle.char_rate_handles.cccd_handle, &rx_data);
-    }
-    // Print handle and value
-    if(data_buffer == 0x0001)
-    {
-        status_led_mgmt_set_status(LED_STATUS_START_MEASUREMENT);
-    }
-    else if(data_buffer == 0x0000)
-    {
-        time_measurement_stop();
-        status_led_mgmt_set_status(LED_STATUS_STOP_MEASUREMENT);
+
+        if(data_buffer == NOTIFICATION_ENABLED)
+        {
+            status_led_mgmt_set_status(LED_STATUS_START_MEASUREMENT);
+        }
+        else if(data_buffer == NOTIFICATION_DISABLED)
+        {
+            time_measurement_stop();
+            status_led_mgmt_set_status(LED_STATUS_STOP_MEASUREMENT);
+        }
     }
 }
 
