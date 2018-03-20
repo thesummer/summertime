@@ -2,10 +2,6 @@ QT += qml quick
 
 SOURCES += main.cpp \
     remoteconnection.cpp \
-
-INCLUDEPATH += ../common
-
-LIBS += -L../common -lcommon
     
 RESOURCES += qml.qrc
 
