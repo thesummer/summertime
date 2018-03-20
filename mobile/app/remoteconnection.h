@@ -2,7 +2,7 @@
 #define REMOTECONNECTION_H
 
 #include <QObject>
-
+#include <QBluetoothServiceDiscoveryAgent>
 #include <QList>
 
 class RemoteConnection : public QObject
@@ -15,6 +15,8 @@ public:
     enum class ConnectionStatus
     {
         Disconnected,
+        BluetoothDisabled,
+        DeviceNotFound,
         Connected,
         ActiveMeasurement,
         ErrInvalidAddress
@@ -33,7 +35,7 @@ signals:
 
 public slots:
     void
-    connect();
+    connectDevice();
 
     void
     disconnect();
@@ -47,8 +49,19 @@ public slots:
     void
     stopMeasurement();
 
-private:
+private slots:
+    void
+    newDevice(const QBluetoothDeviceInfo& info);
 
+    void
+    deviceScanError(QBluetoothDeviceDiscoveryAgent::Error error);
+
+    void
+    deviceScanFinished();
+
+private:
+    QBluetoothDeviceDiscoveryAgent mDiscoveryAgent;
+    QBluetoothDeviceInfo  mDevice;
     ConnectionStatus mStatus = ConnectionStatus::Disconnected;
 };
 
