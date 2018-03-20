@@ -2,12 +2,8 @@
 #define REMOTECONNECTION_H
 
 #include <QObject>
-#include <QTimer>
-#include <QDateTime>
-#include <QUdpSocket>
-#include <QList>
 
-#include <packet.h>
+#include <QList>
 
 class RemoteConnection : public QObject
 {
@@ -37,22 +33,13 @@ signals:
 
 public slots:
     void
-    handlePacketTimeout();
+    connect();
 
     void
-    connectSocket(QString ipAddress);
-
-    void
-    disconnectSocket();
+    disconnect();
 
     void
     handleNewPacket();
-
-    bool
-    sendPacket(const protocol::Packet& packet);
-
-    void
-    sendHeartbeat();
 
     void
     startMeasurement();
@@ -61,32 +48,8 @@ public slots:
     stopMeasurement();
 
 private:
-    void
-    updateTimer();
-
-    struct Timetag
-    {
-        QDateTime   timestamp;
-        quint16 sequenceCount;
-
-        bool operator==(const Timetag& other) const
-        {
-            return (this->sequenceCount == other.sequenceCount);
-        }
-    };
-
-    const quint16 mListenPort = 45567;
-    static const size_t timeoutMs    = 2000;
-    static const size_t hearbeatIntervalMs = 2000;
-
-    QTimer mTimeoutTimer;
-    QTimer mHeartbeatTimer;
-    QList<Timetag> mPacketQueue;
 
     ConnectionStatus mStatus = ConnectionStatus::Disconnected;
-    QUdpSocket mSocket;
-    QHostAddress mRemoteAddress;
-    quint16 mRemotePort = 45568;
 };
 
 #endif // REMOTECONNECTION_H
