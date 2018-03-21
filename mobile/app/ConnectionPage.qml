@@ -34,10 +34,14 @@ Page {
             onStatusChanged: {
             switch (newStatus) {
             case RemoteConnection.Connected:
-
             case RemoteConnection.ActiveMeasurement:
                 col.state = "connected"
                 warningNetwork.text = qsTr("Connected to Sommerzeit")
+                warningNetwork.color = "green"
+                break;
+            case RemoteConnection.Scanning:
+                col.state = "disconnected"
+                warningNetwork.text = qsTr("Scanning...")
                 warningNetwork.color = "green"
                 break;
             case RemoteConnection.Disconnected:
@@ -53,6 +57,16 @@ Page {
             case RemoteConnection.DeviceNotFound:
                 col.state = "disconnected"
                 warningNetwork.text = qsTr("Device not found")
+                warningNetwork.color = "red"
+                break;
+            case RemoteConnection.Connecting:
+                col.state = "disconnected"
+                warningNetwork.text = qsTr("Device found. Connecting...")
+                warningNetwork.color = "green"
+                break;
+            case RemoteConnection.ConnectError:
+                col.state = "disconnected"
+                warningNetwork.text = qsTr("Device found. Connection failed")
                 warningNetwork.color = "red"
                 break;
             case RemoteConnection.ErrInvalidAddress:

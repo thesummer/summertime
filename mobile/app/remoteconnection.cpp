@@ -15,8 +15,11 @@ RemoteConnection::RemoteConnection(QObject *parent) :
 void
 RemoteConnection::connectDevice()
 {
-    if (mStatus != ConnectionStatus::Connected)
+    if (mStatus    != ConnectionStatus::Disconnected || mStatus != ConnectionStatus::BluetoothDisabled
+        || mStatus != ConnectionStatus::ConnectError || mStatus != ConnectionStatus::DeviceNotFound)
     {
+        mStatus = ConnectionStatus::Scanning;
+        emit statusChanged(mStatus);
         mDiscoveryAgent.start();
     }
 }
@@ -26,6 +29,10 @@ RemoteConnection::disconnect()
 {
     if (mStatus == ConnectionStatus::Connected || mStatus == ConnectionStatus::ActiveMeasurement)
     {
+        if (mController)
+        {
+            mController->disconnectFromDevice();
+        }
         // TODO: Implement
         qDebug("Changed status to Disconnected");
         mStatus = ConnectionStatus::Disconnected;
@@ -58,8 +65,20 @@ RemoteConnection::newDevice(const QBluetoothDeviceInfo& info)
          mDevice = info;
          qDebug("Found device %s", mDevice.name().toStdString().c_str());
          mDiscoveryAgent.stop();
-         mStatus = ConnectionStatus::Connected;
+         if (!mController)
+         {
+             mController = QLowEnergyController::createCentral(mDevice, this);
+             connect(mController, &QLowEnergyController::connected, this, &RemoteConnection::deviceConnected);
+             connect(mController, QOverload<QLowEnergyController::Error>::of(&QLowEnergyController::error),
+                     this, &RemoteConnection::deviceConnectError);
+             connect(mController, &QLowEnergyController::disconnected, this, &RemoteConnection::deviceDisconnected);
+             connect(mController, &QLowEnergyController::serviceDiscovered, this, &RemoteConnection::newService);
+             connect(mController, &QLowEnergyController::discoveryFinished, this, &RemoteConnection::serviceScanFinished);
+             mController->setRemoteAddressType(QLowEnergyController::RandomAddress);
+         }
+         mStatus = ConnectionStatus::Connecting;
          emit statusChanged(mStatus);
+         mController->connectToDevice();
      }
 }
 
@@ -93,4 +112,38 @@ RemoteConnection::deviceScanFinished()
         mStatus = ConnectionStatus::DeviceNotFound;
     }
     emit statusChanged(mStatus);
+}
+
+void
+RemoteConnection::deviceConnected()
+{
+    mController->discoverServices();
+    mStatus = ConnectionStatus::Connected;
+    emit statusChanged(mStatus);
+}
+
+void
+RemoteConnection::deviceConnectError(QLowEnergyController::Error /*newError*/)
+{
+    mStatus = ConnectionStatus::ConnectError;
+    emit statusChanged(mStatus);
+}
+
+void
+RemoteConnection::deviceDisconnected()
+{
+    mStatus = ConnectionStatus::Disconnected;
+    emit statusChanged(mStatus);
+}
+
+void
+RemoteConnection::newService(const QBluetoothUuid& newService)
+{
+    qDebug("New Service\n");
+}
+
+void
+RemoteConnection::serviceScanFinished()
+{
+
 }
