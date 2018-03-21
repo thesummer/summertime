@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QBluetoothServiceDiscoveryAgent>
+#include <QLowEnergyController>
 #include <QList>
 
 class RemoteConnection : public QObject
@@ -16,8 +17,11 @@ public:
     {
         Disconnected,
         BluetoothDisabled,
+        Scanning,
         DeviceNotFound,
+        Connecting,
         Connected,
+        ConnectError,
         ActiveMeasurement,
         ErrInvalidAddress
     };
@@ -59,8 +63,24 @@ private slots:
     void
     deviceScanFinished();
 
+    void
+    deviceConnected();
+
+    void
+    deviceConnectError(QLowEnergyController::Error newError);
+
+    void
+    deviceDisconnected();
+
+    void
+    newService(const QBluetoothUuid &newService);
+
+    void
+    serviceScanFinished();
+
 private:
     QBluetoothDeviceDiscoveryAgent mDiscoveryAgent;
+    QLowEnergyController* mController = nullptr;
     QBluetoothDeviceInfo  mDevice;
     ConnectionStatus mStatus = ConnectionStatus::Disconnected;
 };
