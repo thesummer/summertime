@@ -40,20 +40,22 @@ RemoteConnection::disconnect()
     }
 }
 
-void RemoteConnection::handleNewPacket()
-{
-}
-
 void
 RemoteConnection::startMeasurement()
 {
-    // TODO: Implement
+    if (mService)
+    {
+        mService->writeDescriptor(mLiveDataCccd, QByteArray::fromHex("0100"));
+    }
 }
 
 void
 RemoteConnection::stopMeasurement()
 {
-    // TODO: Implement
+    if (mService)
+    {
+        mService->writeDescriptor(mLiveDataCccd, QByteArray::fromHex("0000"));
+    }
 }
 
 void
@@ -103,11 +105,7 @@ RemoteConnection::deviceScanError(QBluetoothDeviceDiscoveryAgent::Error error)
 void
 RemoteConnection::deviceScanFinished()
 {
-    if (mDevice.isValid())
-    {
-        mStatus = ConnectionStatus::Connected;
-    }
-    else
+    if (!mDevice.isValid())
     {
         mStatus = ConnectionStatus::DeviceNotFound;
     }
@@ -137,13 +135,67 @@ RemoteConnection::deviceDisconnected()
 }
 
 void
-RemoteConnection::newService(const QBluetoothUuid& newService)
+RemoteConnection::newService(const QBluetoothUuid& newServiceUuid)
 {
-    qDebug("New Service\n");
+    if (newServiceUuid == mServiceUuid)
+    {
+        mService = mController->createServiceObject(newServiceUuid);
+        qDebug("Found Service uuid: %s\n", newServiceUuid.toString().toLocal8Bit().data());
+        if (!mService)
+        {
+            qWarning("Cannot create service for uuid");
+        }
+    }
 }
 
 void
 RemoteConnection::serviceScanFinished()
 {
+    if (mService)
+    {
+        connect(mService, &QLowEnergyService::stateChanged, this, &RemoteConnection::serviceDetailsDiscovered);
+        connect(mService, &QLowEnergyService::characteristicChanged, this, &RemoteConnection::handleChangedCharacteristic);
+        mService->discoverDetails();
+    }
+}
+
+void
+RemoteConnection::serviceDetailsDiscovered(QLowEnergyService::ServiceState newState)
+{
+    qDebug("state changed %u", newState);
+    if (newState == QLowEnergyService::ServiceDiscovered)
+    {
+        qDebug("Service discovery finished");
+        qDebug("Found %u characteristics", mService->characteristics().size());
+        mLiveData = mService->characteristic(mLiveDataUuid);
+        mRateData = mService->characteristic(mRateDataUuid);
+        if (mLiveData.isValid() && mRateData.isValid())
+        {
+
+            mLiveDataCccd = mLiveData.descriptor(QBluetoothUuid::ClientCharacteristicConfiguration);
+            mRateDataCccd = mRateData.descriptor(QBluetoothUuid::ClientCharacteristicConfiguration);
+            if (mLiveDataCccd.isValid() && mRateDataCccd.isValid())
+            {
+                qDebug("Found valid descriptos");
+                mStatus = ConnectionStatus::Connected;
+                emit statusChanged(mStatus);
+            }
+
+        }
+
+    }
+}
+
+void RemoteConnection::handleChangedCharacteristic(const QLowEnergyCharacteristic &characteristic,
+                                                   const QByteArray &/*newValue*/)
+{
+    if (characteristic == mLiveData)
+    {
+        qDebug("New Live data package");
+    }
+    else if (characteristic == mRateData)
+    {
+        qDebug("New Rate data package");
+    }
 
 }
