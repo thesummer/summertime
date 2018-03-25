@@ -45,9 +45,6 @@ public slots:
     disconnect();
 
     void
-    handleNewPacket();
-
-    void
     startMeasurement();
 
     void
@@ -73,15 +70,30 @@ private slots:
     deviceDisconnected();
 
     void
-    newService(const QBluetoothUuid &newService);
+    newService(const QBluetoothUuid &newServiceUuid);
 
     void
     serviceScanFinished();
+
+    void
+    serviceDetailsDiscovered(QLowEnergyService::ServiceState newState);
+
+    void
+    handleChangedCharacteristic(const QLowEnergyCharacteristic &characteristic,
+                                const QByteArray &newValue);
 
 private:
     QBluetoothDeviceDiscoveryAgent mDiscoveryAgent;
     QLowEnergyController* mController = nullptr;
     QBluetoothDeviceInfo  mDevice;
+    const QBluetoothUuid mServiceUuid = QBluetoothUuid(QString("{0000f00d-1212-efde-1523-785fef13d123}"));
+    const QBluetoothUuid mLiveDataUuid = QBluetoothUuid(QString("00000a0a-1212-efde-1523-785fef13d123"));
+    const QBluetoothUuid mRateDataUuid = QBluetoothUuid(QString("00000b0b-1212-efde-1523-785fef13d123"));
+    QLowEnergyCharacteristic mLiveData;
+    QLowEnergyDescriptor mLiveDataCccd;
+    QLowEnergyCharacteristic mRateData;
+    QLowEnergyDescriptor mRateDataCccd;
+    QLowEnergyService* mService = nullptr;
     ConnectionStatus mStatus = ConnectionStatus::Disconnected;
 };
 
