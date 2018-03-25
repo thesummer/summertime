@@ -8,68 +8,25 @@ Page {
         id: col
         anchors.horizontalCenter: parent.horizontalCenter
 
-        WarningNetworkBox {
-            id: warningNetwork
-        }
-
         ConnectionButton {
             id: connectButton
             text: qsTr("Connect")
 
             onClicked: {
-                remoteConnection.connectSocket(inputIp.text) }
-        }
-
-        MouseArea {
-            id: buttonHideIp
-            Layout.topMargin: 1
-            Layout.preferredWidth: textIp.implicitWidth
-            Layout.preferredHeight: textIp.implicitHeight
-            state: "collapsed"
-
-            Text {
-                id: textIp
-                text: qsTr("[+] Set custom ip")
-                color: "green"
-            }
-
-            states: [
-                State {
-                    name: "collapsed"
-                    PropertyChanges { target: textIp; text: qsTr("[+] Set custom ip") }
-                    PropertyChanges { target: inputIp; visible: false }
-                },
-                State {
-                    name: "open"
-                    PropertyChanges { target: textIp; text: qsTr("[-] Set custom ip") }
-                    PropertyChanges { target: inputIp; visible: true }
-                }
-            ]
-
-            onClicked: { state = state == "collapsed" ? "open" : "collapsed" }
-        }
-        Rectangle {
-            id: inputIp
-            property string text: inputIpText.text == "..." ? "127.0.0.1" : inputIpText.text
-            border.width: 1
-            Layout.leftMargin: 25
-            Layout.preferredHeight: inputIpText.implicitHeight * 1.2
-            Layout.preferredWidth: inputIpText.implicitWidth * 1.2
-            TextInput {
-                id: inputIpText
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.verticalCenter: parent.verticalCenter
-                inputMask: "000.000.000.000;_"
-                font.pointSize: 14
-                selectByMouse: true
+                remoteConnection.connectDevice()
             }
         }
+
         ConnectionButton {
             id: disconnectButton
             enabled: false
             text: qsTr("Disconnect")
 
-            onClicked: { remoteConnection.disconnectSocket() }
+            onClicked: { remoteConnection.disconnect() }
+        }
+
+        WarningNetworkBox {
+            id: warningNetwork
         }
 
         Connections {
@@ -79,8 +36,38 @@ Page {
             case RemoteConnection.Connected:
             case RemoteConnection.ActiveMeasurement:
                 col.state = "connected"
+                warningNetwork.text = qsTr("Connected to Sommerzeit")
+                warningNetwork.color = "green"
                 break;
-            case RemoteConnection.Disconnected: col.state = "disconnected"
+            case RemoteConnection.Scanning:
+                col.state = "disconnected"
+                warningNetwork.text = qsTr("Scanning...")
+                warningNetwork.color = "green"
+                break;
+            case RemoteConnection.Disconnected:
+                col.state = "disconnected"
+                warningNetwork.text = qsTr("Not connected to 'Sommerzeit'")
+                warningNetwork.color = "orange"
+                break;
+            case RemoteConnection.BluetoothDisabled:
+                col.state = "disconnected"
+                warningNetwork.text = qsTr("Bluetooth is disabled")
+                warningNetwork.color = "red"
+                break;
+            case RemoteConnection.DeviceNotFound:
+                col.state = "disconnected"
+                warningNetwork.text = qsTr("Device not found")
+                warningNetwork.color = "red"
+                break;
+            case RemoteConnection.Connecting:
+                col.state = "disconnected"
+                warningNetwork.text = qsTr("Device found. Connecting...")
+                warningNetwork.color = "green"
+                break;
+            case RemoteConnection.ConnectError:
+                col.state = "disconnected"
+                warningNetwork.text = qsTr("Device found. Connection failed")
+                warningNetwork.color = "red"
                 break;
             case RemoteConnection.ErrInvalidAddress:
                 break;

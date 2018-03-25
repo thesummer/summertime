@@ -5,12 +5,13 @@ import QtQuick.Layouts 1.3
 Rectangle {
     Layout.topMargin: 50
     Layout.preferredWidth: warningText.implicitWidth
-    Layout.preferredHeight: textIp.implicitHeight
     Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+    property string text: qsTr("Not connected to 'Sommerzeit'")
+    property color color: "orange"
     Text {
         id: warningText
-        text: qsTr("Not connected to network 'Sommerzeit'")
-        color: "orange"
+        text: parent.text
+        color: parent.color
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
     }

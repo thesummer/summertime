@@ -1,219 +1,149 @@
 #include "remoteconnection.h"
-#include <QNetworkDatagram>
 #include <iostream>
-
-#include <qdatastreamwriter.h>
 
 RemoteConnection::RemoteConnection(QObject *parent) :
     QObject(parent),
-    mTimeoutTimer(this),
-    mSocket(this)
+    mDevice()
 {
-    // Timeout timer is triggered manually
-    mTimeoutTimer.setSingleShot(true);
-    connect(&mTimeoutTimer, &QTimer::timeout, this,
-            &RemoteConnection::handlePacketTimeout);
-    // Heartbeat timer is periodical
-    mHeartbeatTimer.setSingleShot(false);
-    mHeartbeatTimer.setInterval(hearbeatIntervalMs);
-    connect(&mHeartbeatTimer, &QTimer::timeout, this,
-            &RemoteConnection::sendHeartbeat);
-
-    connect(&mSocket, &QUdpSocket::readyRead, this,
-            &RemoteConnection::handleNewPacket);
+    connect(&mDiscoveryAgent, SIGNAL(deviceDiscovered(const QBluetoothDeviceInfo&)),
+              this, SLOT(newDevice(const QBluetoothDeviceInfo&)));
+    connect(&mDiscoveryAgent, SIGNAL(error(QBluetoothDeviceDiscoveryAgent::Error)),
+              this, SLOT(deviceScanError(QBluetoothDeviceDiscoveryAgent::Error)));
+    connect(&mDiscoveryAgent, SIGNAL(finished()), this, SLOT(deviceScanFinished()));
 }
 
 void
-RemoteConnection::handlePacketTimeout()
+RemoteConnection::connectDevice()
 {
-    qWarning("Warning: Packet timed out");
-    switch (mStatus)
+    if (mStatus    != ConnectionStatus::Disconnected || mStatus != ConnectionStatus::BluetoothDisabled
+        || mStatus != ConnectionStatus::ConnectError || mStatus != ConnectionStatus::DeviceNotFound)
     {
-    case ConnectionStatus::ActiveMeasurement:
-        stopMeasurement();
-    case ConnectionStatus::Connected:
-        disconnectSocket();
-        break;
-    default:
-        break;
-    }
-}
-
-void
-RemoteConnection::connectSocket(QString ipAddress)
-{
-    if (mStatus != ConnectionStatus::Connected)
-    {
-        if (mRemoteAddress.setAddress(ipAddress) && mSocket.bind(mListenPort))
-        {
-            mHeartbeatTimer.start();
-            qDebug("Started Heartbeat timer");
-            mStatus = ConnectionStatus::Connected;
-        }
-        else
-        {
-            mStatus = ConnectionStatus::ErrInvalidAddress;
-        }
-        qDebug("Changed status to Connected");
+        mStatus = ConnectionStatus::Scanning;
         emit statusChanged(mStatus);
+        mDiscoveryAgent.start();
     }
 }
 
 void
-RemoteConnection::disconnectSocket()
+RemoteConnection::disconnect()
 {
     if (mStatus == ConnectionStatus::Connected || mStatus == ConnectionStatus::ActiveMeasurement)
     {
-        mHeartbeatTimer.stop();
-        mTimeoutTimer.stop();
-        mSocket.close();
-        mPacketQueue.clear();
-        mStatus = ConnectionStatus::Disconnected;
+        if (mController)
+        {
+            mController->disconnectFromDevice();
+        }
+        // TODO: Implement
         qDebug("Changed status to Disconnected");
+        mStatus = ConnectionStatus::Disconnected;
         emit statusChanged(mStatus);
     }
 }
 
 void RemoteConnection::handleNewPacket()
 {
-    QNetworkDatagram newData = mSocket.receiveDatagram();
-    QDataStreamReader reader(newData.data());
-    protocol::PacketType packetType = static_cast<protocol::PacketType> (reader.readUint16());
-    reader.reset();
-
-    switch (packetType)
-    {
-    case protocol::PacketType::acknowledge:
-    {
-        protocol::AcknowledgePacket packet;
-        if (packet.deserialize(reader))
-        {
-            // We assume that the sequence count in the list is unique
-            mPacketQueue.removeOne(Timetag{QDateTime(), packet.getAckSequenceCount()});
-            updateTimer();
-        }
-        break;
-    }
-    case protocol::PacketType::ping:
-    {
-        protocol::PingPacket packet;
-        if (packet.deserialize(reader))
-        {
-            sendPacket(protocol::AcknowledgePacket(packet));
-        }
-        break;
-    }
-    case protocol::PacketType::liveMeasurement:
-    {
-        protocol::LiveMeasurementPacket packet;
-        if (packet.deserialize(reader))
-        {
-            emit updateLiveData(packet.getTickFrequency());
-            sendPacket(protocol::AcknowledgePacket(packet));
-        }
-        break;
-    }
-    case protocol::PacketType::lastMinuteCount:
-    {
-        protocol::LastMinuteCountPacket packet;
-        if (packet.deserialize(reader))
-        {
-            emit appendNewMinuteCount(packet.getLastMinuteCount());
-            sendPacket(protocol::AcknowledgePacket(packet));
-        }
-        break;
-    }
-    default:
-        qDebug("Received unexpected package type");
-        break;
-    }
-}
-
-bool
-RemoteConnection::sendPacket(const protocol::Packet& packet)
-{
-    QDataStreamWriter buffer(packet.getSerializedSize());
-    packet.serialize(buffer);
-    qint64 ret = mSocket.writeDatagram(QNetworkDatagram(buffer.getByteArray(),
-                                  mRemoteAddress,
-                                  mRemotePort));
-    if (ret == static_cast<qint64>(packet.getSerializedSize()))
-    {
-        if (packet.getPacketType() != protocol::PacketType::acknowledge)
-        {
-            mPacketQueue.push_front(Timetag{QDateTime::currentDateTime(), packet.getSequenceCount()});
-            updateTimer();
-        }
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-void
-RemoteConnection::sendHeartbeat()
-{
-    protocol::PingPacket heartbeatRequest;
-    sendPacket(heartbeatRequest);
 }
 
 void
 RemoteConnection::startMeasurement()
 {
-    if (mStatus == ConnectionStatus::ActiveMeasurement)
-    {
-        stopMeasurement();
-    }
-
-    sendPacket(protocol::StartMeasurementPacket());
-
-    // We set the state to active
-    // If the packet fails to arrive and times out
-    // the timeout handler is responsible for changing the status again.
-    mStatus = ConnectionStatus::ActiveMeasurement;
-    qDebug("Changed status to ActiveMeasurement");
-    emit statusChanged(mStatus);
+    // TODO: Implement
 }
 
 void
 RemoteConnection::stopMeasurement()
 {
-    sendPacket(protocol::StopMeasurementPacket());
-
-    // Only change status to connected if the measurement was active before
-    // If the timeout handler changed it to disconnected don't change it.
-    if (mStatus == ConnectionStatus::ActiveMeasurement)
-    {
-        mStatus = ConnectionStatus::Connected;
-        qDebug("Changed status to Connected");
-        emit statusChanged(mStatus);
-    }
+    // TODO: Implement
 }
 
 void
-RemoteConnection::updateTimer()
+RemoteConnection::newDevice(const QBluetoothDeviceInfo& info)
 {
-    if (!mPacketQueue.isEmpty())
+    if ((info.coreConfigurations() & QBluetoothDeviceInfo::LowEnergyCoreConfiguration)
+        && (info.name() == "Sommerzeit"))
     {
-        // Will restart the timer. As the oldest packet is always in last
-        // restarting on the same packet is ok.
-        auto timeout = QDateTime::currentDateTime().msecsTo(mPacketQueue.last().timestamp.addMSecs(timeoutMs));
-        if (timeout > 0)
-        {
-            qDebug("Starting timeout timer");
-            mTimeoutTimer.start(timeout);
-        }
-        else
-        {
-            mPacketQueue.pop_back();
-            handlePacketTimeout();
-        }
+         mDevice = info;
+         qDebug("Found device %s", mDevice.name().toStdString().c_str());
+         mDiscoveryAgent.stop();
+         if (!mController)
+         {
+             mController = QLowEnergyController::createCentral(mDevice, this);
+             connect(mController, &QLowEnergyController::connected, this, &RemoteConnection::deviceConnected);
+             connect(mController, QOverload<QLowEnergyController::Error>::of(&QLowEnergyController::error),
+                     this, &RemoteConnection::deviceConnectError);
+             connect(mController, &QLowEnergyController::disconnected, this, &RemoteConnection::deviceDisconnected);
+             connect(mController, &QLowEnergyController::serviceDiscovered, this, &RemoteConnection::newService);
+             connect(mController, &QLowEnergyController::discoveryFinished, this, &RemoteConnection::serviceScanFinished);
+             mController->setRemoteAddressType(QLowEnergyController::RandomAddress);
+         }
+         mStatus = ConnectionStatus::Connecting;
+         emit statusChanged(mStatus);
+         mController->connectToDevice();
+     }
+}
+
+void
+RemoteConnection::deviceScanError(QBluetoothDeviceDiscoveryAgent::Error error)
+{
+    if (error == QBluetoothDeviceDiscoveryAgent::PoweredOffError)
+    {
+        mStatus = ConnectionStatus::BluetoothDisabled;
+        emit statusChanged(mStatus);
+    }
+//    else if (error == QBluetoothDeviceDiscoveryAgent::InputOutputError)
+//        setUpdate("Writing or reading from the device resulted in an error.");
+//    else
+//        setUpdate("An unknown error has occurred.");
+
+//    m_deviceScanState = false;
+//    emit devicesUpdated();
+//    emit stateChanged();
+}
+
+void
+RemoteConnection::deviceScanFinished()
+{
+    if (mDevice.isValid())
+    {
+        mStatus = ConnectionStatus::Connected;
     }
     else
     {
-        qDebug("Stopping timeout timer");
-        mTimeoutTimer.stop();
+        mStatus = ConnectionStatus::DeviceNotFound;
     }
+    emit statusChanged(mStatus);
+}
+
+void
+RemoteConnection::deviceConnected()
+{
+    mController->discoverServices();
+    mStatus = ConnectionStatus::Connected;
+    emit statusChanged(mStatus);
+}
+
+void
+RemoteConnection::deviceConnectError(QLowEnergyController::Error /*newError*/)
+{
+    mStatus = ConnectionStatus::ConnectError;
+    emit statusChanged(mStatus);
+}
+
+void
+RemoteConnection::deviceDisconnected()
+{
+    mStatus = ConnectionStatus::Disconnected;
+    emit statusChanged(mStatus);
+}
+
+void
+RemoteConnection::newService(const QBluetoothUuid& newService)
+{
+    qDebug("New Service\n");
+}
+
+void
+RemoteConnection::serviceScanFinished()
+{
+
 }

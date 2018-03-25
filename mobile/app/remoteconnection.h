@@ -2,12 +2,9 @@
 #define REMOTECONNECTION_H
 
 #include <QObject>
-#include <QTimer>
-#include <QDateTime>
-#include <QUdpSocket>
+#include <QBluetoothServiceDiscoveryAgent>
+#include <QLowEnergyController>
 #include <QList>
-
-#include <packet.h>
 
 class RemoteConnection : public QObject
 {
@@ -19,7 +16,12 @@ public:
     enum class ConnectionStatus
     {
         Disconnected,
+        BluetoothDisabled,
+        Scanning,
+        DeviceNotFound,
+        Connecting,
         Connected,
+        ConnectError,
         ActiveMeasurement,
         ErrInvalidAddress
     };
@@ -37,22 +39,13 @@ signals:
 
 public slots:
     void
-    handlePacketTimeout();
+    connectDevice();
 
     void
-    connectSocket(QString ipAddress);
-
-    void
-    disconnectSocket();
+    disconnect();
 
     void
     handleNewPacket();
-
-    bool
-    sendPacket(const protocol::Packet& packet);
-
-    void
-    sendHeartbeat();
 
     void
     startMeasurement();
@@ -60,33 +53,36 @@ public slots:
     void
     stopMeasurement();
 
-private:
+private slots:
     void
-    updateTimer();
+    newDevice(const QBluetoothDeviceInfo& info);
 
-    struct Timetag
-    {
-        QDateTime   timestamp;
-        quint16 sequenceCount;
+    void
+    deviceScanError(QBluetoothDeviceDiscoveryAgent::Error error);
 
-        bool operator==(const Timetag& other) const
-        {
-            return (this->sequenceCount == other.sequenceCount);
-        }
-    };
+    void
+    deviceScanFinished();
 
-    const quint16 mListenPort = 45567;
-    static const size_t timeoutMs    = 2000;
-    static const size_t hearbeatIntervalMs = 2000;
+    void
+    deviceConnected();
 
-    QTimer mTimeoutTimer;
-    QTimer mHeartbeatTimer;
-    QList<Timetag> mPacketQueue;
+    void
+    deviceConnectError(QLowEnergyController::Error newError);
 
+    void
+    deviceDisconnected();
+
+    void
+    newService(const QBluetoothUuid &newService);
+
+    void
+    serviceScanFinished();
+
+private:
+    QBluetoothDeviceDiscoveryAgent mDiscoveryAgent;
+    QLowEnergyController* mController = nullptr;
+    QBluetoothDeviceInfo  mDevice;
     ConnectionStatus mStatus = ConnectionStatus::Disconnected;
-    QUdpSocket mSocket;
-    QHostAddress mRemoteAddress;
-    quint16 mRemotePort = 45568;
 };
 
 #endif // REMOTECONNECTION_H

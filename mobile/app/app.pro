@@ -1,11 +1,7 @@
-QT += qml quick
+QT += qml quick bluetooth
 
 SOURCES += main.cpp \
     remoteconnection.cpp \
-
-INCLUDEPATH += ../common
-
-LIBS += -L../common -lcommon
     
 RESOURCES += qml.qrc
 
