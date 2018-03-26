@@ -5,6 +5,7 @@
 #include <QBluetoothServiceDiscoveryAgent>
 #include <QLowEnergyController>
 #include <QList>
+#include <QContiguousCache>
 
 class RemoteConnection : public QObject
 {
@@ -83,6 +84,8 @@ private slots:
                                 const QByteArray &newValue);
 
 private:
+    const size_t CacheSize = 10;
+    const size_t ClockFreq = 32768; ///< The clock frequency of the low freq clock of the nrf
     QBluetoothDeviceDiscoveryAgent mDiscoveryAgent;
     QLowEnergyController* mController = nullptr;
     QBluetoothDeviceInfo  mDevice;
@@ -95,6 +98,9 @@ private:
     QLowEnergyDescriptor mRateDataCccd;
     QLowEnergyService* mService = nullptr;
     ConnectionStatus mStatus = ConnectionStatus::Disconnected;
+    QContiguousCache<double> mCache;
+    quint64 mLastTick;
+    double mCurrentRatePerSec;
 };
 
 #endif // REMOTECONNECTION_H
