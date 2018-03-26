@@ -3,7 +3,9 @@
 
 RemoteConnection::RemoteConnection(QObject *parent) :
     QObject(parent),
-    mDevice()
+    mDevice(),
+    mCache(CacheSize),
+    mLastTick(0)
 {
     connect(&mDiscoveryAgent, SIGNAL(deviceDiscovered(const QBluetoothDeviceInfo&)),
               this, SLOT(newDevice(const QBluetoothDeviceInfo&)));
@@ -46,6 +48,9 @@ RemoteConnection::startMeasurement()
     if (mService)
     {
         mService->writeDescriptor(mLiveDataCccd, QByteArray::fromHex("0100"));
+        mService->writeDescriptor(mRateDataCccd, QByteArray::fromHex("0100"));
+        mStatus = ConnectionStatus::ActiveMeasurement;
+        emit statusChanged(mStatus);
     }
 }
 
@@ -55,6 +60,11 @@ RemoteConnection::stopMeasurement()
     if (mService)
     {
         mService->writeDescriptor(mLiveDataCccd, QByteArray::fromHex("0000"));
+        mService->writeDescriptor(mRateDataCccd, QByteArray::fromHex("0000"));
+        mStatus = ConnectionStatus::Connected;
+        emit statusChanged(mStatus);
+        mCurrentRatePerSec = 0.0;
+        mLastTick = 0;
     }
 }
 
@@ -116,8 +126,6 @@ void
 RemoteConnection::deviceConnected()
 {
     mController->discoverServices();
-    mStatus = ConnectionStatus::Connected;
-    emit statusChanged(mStatus);
 }
 
 void
@@ -186,16 +194,52 @@ RemoteConnection::serviceDetailsDiscovered(QLowEnergyService::ServiceState newSt
     }
 }
 
-void RemoteConnection::handleChangedCharacteristic(const QLowEnergyCharacteristic &characteristic,
-                                                   const QByteArray &/*newValue*/)
+void RemoteConnection::handleChangedCharacteristic(const QLowEnergyCharacteristic& characteristic,
+                                                   const QByteArray& newValue)
 {
+    QDataStream data(newValue);
+    data.setByteOrder(QDataStream::BigEndian);
     if (characteristic == mLiveData)
     {
-        qDebug("New Live data package");
+        quint16 minute;
+        quint32 counter;
+        data >> minute >> counter;
+        qDebug("New Live data package: %u min %u", minute, counter);
+
+        if (mLastTick != 0)
+        {
+            quint64 currentTick = minute*60*ClockFreq + counter;
+            double ratePerSec = 0.5 * ClockFreq / (currentTick - mLastTick);
+            qDebug("Rate %f", ratePerSec);
+            if (mCache.isFull())
+            {
+                // We have CacheSize values stored. Pop the oldest, update the rate
+                // and push the new value to the cache
+                double oldRate = mCache.takeFirst();
+                mCurrentRatePerSec -= oldRate/CacheSize;
+                mCurrentRatePerSec += ratePerSec/CacheSize;
+                mCache.append(ratePerSec);
+            }
+            else
+            {
+                mCurrentRatePerSec *= mCache.size();
+                mCache.append(ratePerSec);
+                mCurrentRatePerSec = (mCurrentRatePerSec + ratePerSec) / mCache.size();
+            }
+            emit updateLiveData(static_cast<float>(mCurrentRatePerSec));
+        }
+        mLastTick = minute*60*ClockFreq + counter;
     }
     else if (characteristic == mRateData)
     {
-        qDebug("New Rate data package");
+        quint16 minute;
+        quint16 rate;
+
+        data >> minute >> rate;
+
+        appendNewMinuteCount(static_cast<float>(rate));
+
+        qDebug("New Rate data package: %u min %u", minute, rate);
     }
 
 }
