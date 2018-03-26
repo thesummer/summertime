@@ -47,6 +47,9 @@ RemoteConnection::startMeasurement()
 {
     if (mService)
     {
+        mCurrentRatePerSec = 0.0;
+        mLastTick = 0;
+        mCache.clear();
         mService->writeDescriptor(mLiveDataCccd, QByteArray::fromHex("0100"));
         mService->writeDescriptor(mRateDataCccd, QByteArray::fromHex("0100"));
         mStatus = ConnectionStatus::ActiveMeasurement;
@@ -63,8 +66,6 @@ RemoteConnection::stopMeasurement()
         mService->writeDescriptor(mRateDataCccd, QByteArray::fromHex("0000"));
         mStatus = ConnectionStatus::Connected;
         emit statusChanged(mStatus);
-        mCurrentRatePerSec = 0.0;
-        mLastTick = 0;
     }
 }
 
