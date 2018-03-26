@@ -1,4 +1,5 @@
 QT += qml quick bluetooth
+QT += androidextras
 
 SOURCES += main.cpp \
     remoteconnection.cpp \
@@ -33,5 +34,12 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     remoteconnection.h \
 
+ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+
 DISTFILES += \
-    ../Protocol.md
+    android/AndroidManifest.xml \
+    android/res/values/libs.xml \
+    android/build.gradle \
+    android/AndroidManifest.xml \
+    android/res/values/libs.xml \
+    android/build.gradle
