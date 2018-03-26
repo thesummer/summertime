@@ -23,7 +23,9 @@ MouseArea{
                 height: 0.75 * parent.height
                 width: parent.width
                 text: value.toFixed(2)
-                font.pointSize: height * 0.5
+                font.pointSize: 100
+                minimumPointSize: 10
+                fontSizeMode: Text.Fit
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }
