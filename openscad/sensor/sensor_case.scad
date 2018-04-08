@@ -1,37 +1,39 @@
 include <sensor_module.scad>
 use <lego_brick_builder.scad>
-use <fillets.scad>
 
 
 LEGO = getFLU(); // Lego base unit
 
-pcb_offset = [0,7.5*LEGO-getPcbDimensions().y/2,2*LEGO] + [3,0,0];
+pcb_offset = [0,7.5*LEGO-getPcbDimensions().y/2,2*LEGO] + [3.5,0,0];
 rim_dim = [20*LEGO, 15*LEGO, getPcbDimensions().z+2.3];
 rim_offset = [0,0,2*LEGO];
 
 top_dim = [20*LEGO, 15*LEGO, 2];
 top_offset = rim_offset + [0,0,rim_dim.z];
 
-screw_diameter = 1.0;
-thread_offset = 0.25;
+screw_diameter = 2.0;
+thread_offset = screw_diameter - screw_diameter*0.7;
+screw_mount_d = 5;
 
 bar_tolerance = 0.2;
+
+cable_d = 4;
 
 $fn=50;
 
 //translate([0,30,0]) bottom();
 
-//translate(pcb_offset+[0,0,0.5]) sensor_module();
+translate(pcb_offset+[0,0,0.5]) sensor_module();
 bottom();
 
-//translate([0,-5,2]) rotate([180,0,0]) top();
+translate([0,-5,2]) rotate([180,0,0]) top();
 
-//translate([0,-60,0])
-//{
-//    bottom();
-//    translate(pcb_offset+[0,0,0.5]) sensor_module();
-//    translate(top_offset) top();
-//}
+translate([0,-60,0])
+{
+    bottom();
+    translate(pcb_offset+[0,0,0.5]) sensor_module();
+    translate(top_offset) top();
+}
 
 module bottom()
 {
@@ -56,7 +58,7 @@ module bottom()
                 intersection()
                 {
                     cube([2.5,2.5,rim_dim[2]]);
-                    cylinder(d=4.2, h=rim_dim[2]);
+                    cylinder(d=screw_mount_d, h=rim_dim[2]);
                 }
             }    
             // Add screw corner: bottom left
@@ -65,7 +67,7 @@ module bottom()
                 rotate([0,0,-90]) intersection()
                 {
                     cube([2.5,2.5,rim_dim[2]]);
-                    cylinder(d=4.2, h=rim_dim[2]);
+                    cylinder(d=screw_mount_d, h=rim_dim[2]);
                 }
             }
             // Add screw corner: top right
@@ -74,7 +76,7 @@ module bottom()
                 rotate([0,0,90]) intersection()
                 {
                     cube([2.5,2.5,rim_dim[2]]);
-                    cylinder(d=4.2, h=rim_dim[2]);
+                    cylinder(d=screw_mount_d, h=rim_dim[2]);
                 }
             }
             // Add screw corner: top left
@@ -83,7 +85,7 @@ module bottom()
                 rotate([0,0,180]) intersection()
                 {
                     cube([2.5,2.5,rim_dim[2]]);
-                    cylinder(d=4.2, h=rim_dim[2]);
+                    cylinder(d=screw_mount_d, h=rim_dim[2]);
                 }
             }
 
@@ -93,6 +95,8 @@ module bottom()
         translate([20*LEGO-1.5,1.5,rim_offset.z]) cylinder(d=screw_diameter-thread_offset, h=rim_dim[2]);
         translate([20*LEGO-1.5,15*LEGO-1.5,rim_offset.z]) cylinder(d=screw_diameter-thread_offset, h=rim_dim[2]);
         translate([1.5,15*LEGO-1.5,rim_offset.z]) cylinder(d=screw_diameter-thread_offset, h=rim_dim.z);
+        // Create hole for audio cable
+        translate([0,15*LEGO/2,pcb_offset.z+1]) rotate([0,90,0]) cylinder(h=2, d=cable_d);
     }
 
 }
