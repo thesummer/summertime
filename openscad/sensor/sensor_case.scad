@@ -5,7 +5,7 @@ use <LEGO.scad>;
 //LEGO = getFLU(); // Lego base unit              
 //rim_dim = [20*LEGO, 15*LEGO, getPcbDimensions().z+2.3];
 lego_height = 3.2;
-rim_dim = [31.8, 23.8, 3.8];
+rim_dim = [31.8, 23.8, 4.5];
 pcb_offset = [0,(rim_dim.y-getPcbDimensions().y)/2,lego_height] + [3.5,0,0];
 
 rim_offset = [0,0,lego_height];
@@ -14,7 +14,7 @@ top_dim = [rim_dim.x, rim_dim.y, 2];
 top_offset = rim_offset + [0,0,rim_dim.z];
 
 screw_diameter = 2.0;
-thread_offset = screw_diameter - screw_diameter*0.7;
+thread_offset = 0.1; //screw_diameter - screw_diameter*0.7;
 screw_mount_d = 5;
 
 bar_tolerance = 0.2;
@@ -26,9 +26,9 @@ $fn=200;
 //translate([0,30,0]) bottom();
 
 //translate(pcb_offset+[0,0,0.5]) sensor_module();
-//bottom();
+bottom();
 
-translate([0,-5,2]) rotate([180,0,0]) top();
+//translate([0,-5,2]) rotate([180,0,0]) top();
 
 //translate([0,-60,0])
 //{
