@@ -25,10 +25,10 @@ $fn=200;
 
 //translate([0,30,0]) bottom();
 
-translate(pcb_offset+[0,0,0.5]) sensor_module();
-bottom();
+//translate(pcb_offset+[0,0,0.5]) sensor_module();
+//bottom();
 
-//translate([0,-5,2]) rotate([180,0,0]) top();
+translate([0,-5,2]) rotate([180,0,0]) top();
 
 //translate([0,-60,0])
 //{
@@ -118,7 +118,7 @@ module top()
     {
         difference()
         {
-            cube(top_dim);
+            color("green") cube(top_dim);
             // Create hole in screw corner
             translate([1.5,1.5,0]) cylinder(d=screw_diameter, h=top_dim.z);
             translate([rim_dim.x-1.5,1.5,0]) cylinder(d=screw_diameter, h=top_dim.z);
