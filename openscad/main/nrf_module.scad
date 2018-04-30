@@ -4,9 +4,13 @@ pcb_length = 32.1;
 pcb_width = 24.55;
 pcb_height = 1.15;
 
+function getNrfDimensions() = [pcb_length, pcb_width, pcb_height];
+
+//nrf_module();
+
 module nrf_module()
 {
-    pcb_dim = [pcb_length, pcb_width, pcb_height];
+    pcb_dim = getNrfDimensions();
     header_offset = [9,2,2.5];
 
     union()
